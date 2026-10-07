@@ -14,6 +14,7 @@
 - All mirror sync entry points acquire a per-client database lease. Why: notifications, manual actions and safety cron must not replace the same rows concurrently.
 - Open dashboards check mirrored sync status every 30 seconds (shared panels every 60 seconds), never polling Sheets directly. Why: reflect completed syncs without consuming Google quotas.
 - Sheets reads are sequential across clients with bounded transient-error backoff; permanent 4xx fail without retry. Why: avoid quota bursts and preserve provider error details.
+- Drive processing retains pending notifications after transient read failures; dashboards distinguish stale snapshots from unavailable data. Why: quota failures must not discard edits or misrepresent saved results.
 - Portais (Google Sheets) are read-only sources: sync only reads via the Google Sheets connector and mirrors into DB tables (src/lib/sync.server.ts); the UI reads only from the DB. Why: other automations depend on the sheets staying intact.
 - Sheet columns/tabs are matched by normalized header/title (trim, lowercase, no accents), never by position. Why: headers vary across Portais.
 - Metrics are computed client-side in src/lib/metrics.ts from mirrored rows so every card can list its source rows (audit). Why: auditability requirement.
