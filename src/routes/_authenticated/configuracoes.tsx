@@ -11,6 +11,8 @@ import { AdminOnly, Logo, useConfig } from "@/components/atlas/AppShell";
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Configurações · Atlas" },
       { name: "description", content: "Percentuais de comissão, domínio de acesso e logo do painel." },
       { property: "og:title", content: "Configurações · Atlas" },

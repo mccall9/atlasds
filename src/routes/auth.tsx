@@ -11,6 +11,8 @@ import { Logo } from "@/components/atlas/AppShell";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Entrar · Atlas | Painel de Resultados" },
       { name: "description", content: "Acesso da equipe Atlas ao painel de resultados." },
       { property: "og:title", content: "Entrar · Atlas | Painel de Resultados" },

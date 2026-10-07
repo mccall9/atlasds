@@ -30,6 +30,8 @@ export const Route = createFileRoute("/_authenticated/painel")({
   validateSearch: search,
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Painel de Resultados · Atlas" },
       { name: "description", content: "Investimento, consultas, conversão, vendas, comissões e previsibilidade por cliente." },
       { property: "og:title", content: "Painel de Resultados · Atlas" },

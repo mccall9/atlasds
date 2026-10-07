@@ -14,6 +14,8 @@ import type { PanelData } from "@/lib/metrics";
 export const Route = createFileRoute("/c/$token")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Seu Painel de Resultados · Atlas" },
       { name: "description", content: "Painel de resultados do cliente Atlas Assessoria." },
       { name: "robots", content: "noindex" },

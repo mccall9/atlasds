@@ -16,6 +16,8 @@ import { parseDate, parseNumber } from "@/lib/parse";
 export const Route = createFileRoute("/_authenticated/investimentos")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Investimento em anúncios · Atlas" },
       { name: "description", content: "Lançamento de investimento e conversas de Meta Ads e Google Ads." },
       { property: "og:title", content: "Investimento em anúncios · Atlas" },
