@@ -18,7 +18,9 @@ import { Route as AuthenticatedInvestimentosRouteImport } from './routes/_authen
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated/logs'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as CTokenRouteImport } from './routes/c.$token'
+import { Route as ApiPublicCronDriveChangesRouteImport } from './routes/api/public/cron/drive-changes'
 import { Route as ApiPublicCronSyncPortaisRouteImport } from './routes/api/public/cron/sync-portais'
+import { Route as ApiPublicGoogleDriveChangesRouteImport } from './routes/api/public/google-drive/changes'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -66,10 +68,22 @@ const CTokenRoute = CTokenRouteImport.update({
   path: '/c/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronDriveChangesRoute =
+  ApiPublicCronDriveChangesRouteImport.update({
+    id: '/api/public/cron/drive-changes',
+    path: '/api/public/cron/drive-changes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronSyncPortaisRoute =
   ApiPublicCronSyncPortaisRouteImport.update({
     id: '/api/public/cron/sync-portais',
     path: '/api/public/cron/sync-portais',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicGoogleDriveChangesRoute =
+  ApiPublicGoogleDriveChangesRouteImport.update({
+    id: '/api/public/google-drive/changes',
+    path: '/api/public/google-drive/changes',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -82,7 +96,9 @@ export interface FileRoutesByFullPath {
   '/logs': typeof AuthenticatedLogsRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/c/$token': typeof CTokenRoute
+  '/api/public/cron/drive-changes': typeof ApiPublicCronDriveChangesRoute
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
+  '/api/public/google-drive/changes': typeof ApiPublicGoogleDriveChangesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -93,7 +109,9 @@ export interface FileRoutesByTo {
   '/logs': typeof AuthenticatedLogsRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/c/$token': typeof CTokenRoute
+  '/api/public/cron/drive-changes': typeof ApiPublicCronDriveChangesRoute
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
+  '/api/public/google-drive/changes': typeof ApiPublicGoogleDriveChangesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,7 +124,9 @@ export interface FileRoutesById {
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/c/$token': typeof CTokenRoute
+  '/api/public/cron/drive-changes': typeof ApiPublicCronDriveChangesRoute
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
+  '/api/public/google-drive/changes': typeof ApiPublicGoogleDriveChangesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -119,7 +139,9 @@ export interface FileRouteTypes {
     | '/logs'
     | '/painel'
     | '/c/$token'
+    | '/api/public/cron/drive-changes'
     | '/api/public/cron/sync-portais'
+    | '/api/public/google-drive/changes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -130,7 +152,9 @@ export interface FileRouteTypes {
     | '/logs'
     | '/painel'
     | '/c/$token'
+    | '/api/public/cron/drive-changes'
     | '/api/public/cron/sync-portais'
+    | '/api/public/google-drive/changes'
   id:
     | '__root__'
     | '/'
@@ -142,7 +166,9 @@ export interface FileRouteTypes {
     | '/_authenticated/logs'
     | '/_authenticated/painel'
     | '/c/$token'
+    | '/api/public/cron/drive-changes'
     | '/api/public/cron/sync-portais'
+    | '/api/public/google-drive/changes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -150,7 +176,9 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CTokenRoute: typeof CTokenRoute
+  ApiPublicCronDriveChangesRoute: typeof ApiPublicCronDriveChangesRoute
   ApiPublicCronSyncPortaisRoute: typeof ApiPublicCronSyncPortaisRoute
+  ApiPublicGoogleDriveChangesRoute: typeof ApiPublicGoogleDriveChangesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -218,11 +246,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/drive-changes': {
+      id: '/api/public/cron/drive-changes'
+      path: '/api/public/cron/drive-changes'
+      fullPath: '/api/public/cron/drive-changes'
+      preLoaderRoute: typeof ApiPublicCronDriveChangesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/sync-portais': {
       id: '/api/public/cron/sync-portais'
       path: '/api/public/cron/sync-portais'
       fullPath: '/api/public/cron/sync-portais'
       preLoaderRoute: typeof ApiPublicCronSyncPortaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/google-drive/changes': {
+      id: '/api/public/google-drive/changes'
+      path: '/api/public/google-drive/changes'
+      fullPath: '/api/public/google-drive/changes'
+      preLoaderRoute: typeof ApiPublicGoogleDriveChangesRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -252,7 +294,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CTokenRoute: CTokenRoute,
+  ApiPublicCronDriveChangesRoute: ApiPublicCronDriveChangesRoute,
   ApiPublicCronSyncPortaisRoute: ApiPublicCronSyncPortaisRoute,
+  ApiPublicGoogleDriveChangesRoute: ApiPublicGoogleDriveChangesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
