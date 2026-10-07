@@ -14,16 +14,472 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      acompanhamento: {
+        Row: {
+          cirurgias: number | null
+          cliente_id: string
+          comparecimentos: number | null
+          consultas_agendadas: number | null
+          id: string
+          ordem: number
+          raw: Json | null
+          semana_inicio: string | null
+          semana_label: string | null
+          vendas: number | null
+        }
+        Insert: {
+          cirurgias?: number | null
+          cliente_id: string
+          comparecimentos?: number | null
+          consultas_agendadas?: number | null
+          id?: string
+          ordem?: number
+          raw?: Json | null
+          semana_inicio?: string | null
+          semana_label?: string | null
+          vendas?: number | null
+        }
+        Update: {
+          cirurgias?: number | null
+          cliente_id?: string
+          comparecimentos?: number | null
+          consultas_agendadas?: number | null
+          id?: string
+          ordem?: number
+          raw?: Json | null
+          semana_inicio?: string | null
+          semana_label?: string | null
+          vendas?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acompanhamento_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clientes: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          hunter: string | null
+          id: string
+          last_sync_at: string | null
+          last_sync_error: string | null
+          layout: string
+          meta_mensal_override: number | null
+          nome: string
+          performance: string | null
+          share_token: string | null
+          spreadsheet_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          hunter?: string | null
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          layout?: string
+          meta_mensal_override?: number | null
+          nome: string
+          performance?: string | null
+          share_token?: string | null
+          spreadsheet_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          hunter?: string | null
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          layout?: string
+          meta_mensal_override?: number | null
+          nome?: string
+          performance?: string | null
+          share_token?: string | null
+          spreadsheet_id?: string
+        }
+        Relationships: []
+      }
+      configuracoes: {
+        Row: {
+          dominio_permitido: string | null
+          id: number
+          pct_atlas: number
+          pct_hunter: number
+          pct_performance: number
+          pct_total: number
+          updated_at: string
+        }
+        Insert: {
+          dominio_permitido?: string | null
+          id?: number
+          pct_atlas?: number
+          pct_hunter?: number
+          pct_performance?: number
+          pct_total?: number
+          updated_at?: string
+        }
+        Update: {
+          dominio_permitido?: string | null
+          id?: number
+          pct_atlas?: number
+          pct_hunter?: number
+          pct_performance?: number
+          pct_total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      info_gerais: {
+        Row: {
+          chave: string | null
+          cliente_id: string
+          id: string
+          valor: string | null
+        }
+        Insert: {
+          chave?: string | null
+          cliente_id: string
+          id?: string
+          valor?: string | null
+        }
+        Update: {
+          chave?: string | null
+          cliente_id?: string
+          id?: string
+          valor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "info_gerais_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investimento_anuncios: {
+        Row: {
+          cliente_id: string
+          conversas_iniciadas: number
+          created_at: string
+          created_by: string | null
+          data: string
+          id: string
+          plataforma: string
+          valor_investido: number
+        }
+        Insert: {
+          cliente_id: string
+          conversas_iniciadas?: number
+          created_at?: string
+          created_by?: string | null
+          data: string
+          id?: string
+          plataforma: string
+          valor_investido?: number
+        }
+        Update: {
+          cliente_id?: string
+          conversas_iniciadas?: number
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          id?: string
+          plataforma?: string
+          valor_investido?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investimento_anuncios_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metas: {
+        Row: {
+          alcancado: number | null
+          ano: number
+          cliente_id: string
+          id: string
+          mes: number
+          meta_cirurgias: number | null
+          meta_consultas: number | null
+          meta_ideal: number | null
+          meta_minima: number | null
+          meta_vendas: number | null
+          supermeta: number | null
+        }
+        Insert: {
+          alcancado?: number | null
+          ano: number
+          cliente_id: string
+          id?: string
+          mes: number
+          meta_cirurgias?: number | null
+          meta_consultas?: number | null
+          meta_ideal?: number | null
+          meta_minima?: number | null
+          meta_vendas?: number | null
+          supermeta?: number | null
+        }
+        Update: {
+          alcancado?: number | null
+          ano?: number
+          cliente_id?: string
+          id?: string
+          mes?: number
+          meta_cirurgias?: number | null
+          meta_consultas?: number | null
+          meta_ideal?: number | null
+          meta_minima?: number | null
+          meta_vendas?: number | null
+          supermeta?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      regras_procedimentos: {
+        Row: {
+          cliente_id: string
+          formas_pagamento: string | null
+          id: string
+          permite_desconto_av: string | null
+          procedimento: string
+          regras_parcelamento: string | null
+          sinal_percentual: string | null
+          valor_maximo: number | null
+          valor_minimo: number | null
+        }
+        Insert: {
+          cliente_id: string
+          formas_pagamento?: string | null
+          id?: string
+          permite_desconto_av?: string | null
+          procedimento: string
+          regras_parcelamento?: string | null
+          sinal_percentual?: string | null
+          valor_maximo?: number | null
+          valor_minimo?: number | null
+        }
+        Update: {
+          cliente_id?: string
+          formas_pagamento?: string | null
+          id?: string
+          permite_desconto_av?: string | null
+          procedimento?: string
+          regras_parcelamento?: string | null
+          sinal_percentual?: string | null
+          valor_maximo?: number | null
+          valor_minimo?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regras_procedimentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sync_logs: {
+        Row: {
+          cliente_id: string | null
+          erro: string | null
+          fim: string | null
+          id: string
+          inicio: string
+          linhas_lidas: number | null
+          status: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          erro?: string | null
+          fim?: string | null
+          id?: string
+          inicio?: string
+          linhas_lidas?: number | null
+          status?: string
+        }
+        Update: {
+          cliente_id?: string | null
+          erro?: string | null
+          fim?: string | null
+          id?: string
+          inicio?: string
+          linhas_lidas?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_logs_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_clientes: {
+        Row: {
+          cliente_id: string
+          user_id: string
+        }
+        Insert: {
+          cliente_id: string
+          user_id: string
+        }
+        Update: {
+          cliente_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_clientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vendas: {
+        Row: {
+          caixa_recebido: number | null
+          cliente_id: string
+          comissao_atlas: number | null
+          comissao_extra: number | null
+          comissao_hunter: number | null
+          comparecimentos: number
+          consultas: number | null
+          data_cirurgia: string | null
+          data_consulta: string | null
+          data_venda: string | null
+          id: string
+          lead_nome: string
+          linha_planilha: number | null
+          observacoes: string | null
+          orcamento: number | null
+          origem: string | null
+          pago_100: boolean | null
+          procedimento: string | null
+          status: string | null
+          synced_at: string
+          valor_fechado: number | null
+          vendas: number | null
+        }
+        Insert: {
+          caixa_recebido?: number | null
+          cliente_id: string
+          comissao_atlas?: number | null
+          comissao_extra?: number | null
+          comissao_hunter?: number | null
+          comparecimentos?: number
+          consultas?: number | null
+          data_cirurgia?: string | null
+          data_consulta?: string | null
+          data_venda?: string | null
+          id?: string
+          lead_nome: string
+          linha_planilha?: number | null
+          observacoes?: string | null
+          orcamento?: number | null
+          origem?: string | null
+          pago_100?: boolean | null
+          procedimento?: string | null
+          status?: string | null
+          synced_at?: string
+          valor_fechado?: number | null
+          vendas?: number | null
+        }
+        Update: {
+          caixa_recebido?: number | null
+          cliente_id?: string
+          comissao_atlas?: number | null
+          comissao_extra?: number | null
+          comissao_hunter?: number | null
+          comparecimentos?: number
+          consultas?: number | null
+          data_cirurgia?: string | null
+          data_consulta?: string | null
+          data_venda?: string | null
+          id?: string
+          lead_nome?: string
+          linha_planilha?: number | null
+          observacoes?: string | null
+          orcamento?: number | null
+          origem?: string | null
+          pago_100?: boolean | null
+          procedimento?: string | null
+          status?: string | null
+          synced_at?: string
+          valor_fechado?: number | null
+          vendas?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_view_cliente: { Args: { _cliente_id: string }; Returns: boolean }
+      claim_access: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "equipe" | "cliente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +606,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "equipe", "cliente"],
+    },
   },
 } as const
