@@ -198,7 +198,7 @@ export async function syncTodos(clienteId?: string) {
   const results: { nome: string; ok: boolean; erro?: string }[] = [];
   for (const c of data) {
     const result = await syncCliente(c);
-    results.push({ nome: c.nome, ok: result.ok, erro: result.erro });
+    results.push({ nome: c.nome, ok: result.ok, ...(result.erro ? { erro: result.erro } : {}) });
     // Spread the reads instead of bursting all Portais against a shared quota.
     await new Promise((resolve) => setTimeout(resolve, 1200));
   }
