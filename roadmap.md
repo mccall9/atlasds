@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Orientar quais acessos Meta/BM são necessários por médico (sem pedir senhas).
 - [x] Liberar administrador para jhon.cs@assessoriaatlas.com.
 - [x] Conferir atraso, tratar limite de leituras e verificar painel aberto atualizando automaticamente após sincronização.
 - [ ] Implementar detecção de mudanças pelo Google Drive (opção escolhida); conectar e verificar autorização, manter cron de segurança.
