@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { readSheets } from "./sheets-request.server";
 import {
   MESES, canonicalStatus, emptyToNull, norm, parseBool, parseDate, parseNumber,
 } from "./parse";
@@ -13,12 +14,7 @@ function headers() {
 }
 
 async function gget(path: string) {
-  const res = await fetch(`${GATEWAY}${path}`, { headers: headers() });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Google Sheets [${res.status}]: ${body.slice(0, 300)}`);
-  }
-  return res.json();
+  return readSheets(`${GATEWAY}${path}`, headers());
 }
 
 type Grid = string[][];
@@ -200,10 +196,11 @@ export async function syncTodos(clienteId?: string) {
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   const results: { nome: string; ok: boolean; erro?: string }[] = [];
-  for (let i = 0; i < data.length; i += 4) {
-    const batch = data.slice(i, i + 4);
-    const r = await Promise.all(batch.map((c: any) => syncCliente(c)));
-    r.forEach((x, j) => results.push({ nome: batch[j].nome, ok: x.ok, erro: x.erro }));
+  for (const c of data) {
+    const result = await syncCliente(c);
+    results.push({ nome: c.nome, ok: result.ok, erro: result.erro });
+    // Spread the reads instead of bursting all Portais against a shared quota.
+    await new Promise((resolve) => setTimeout(resolve, 1200));
   }
   return results;
 }
