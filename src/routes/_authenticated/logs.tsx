@@ -8,6 +8,8 @@ import { fmtDateTime } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/logs")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Sincronizações · Atlas" },
       { name: "description", content: "Histórico de leitura dos Portais de Resultados." },
       { property: "og:title", content: "Sincronizações · Atlas" },

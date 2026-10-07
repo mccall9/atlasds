@@ -14,6 +14,8 @@ import type { PanelData } from "@/lib/metrics";
 export const Route = createFileRoute("/c/$token")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Seu Painel de Resultados · Atlas" },
       { name: "description", content: "Painel de resultados do cliente Atlas Assessoria." },
       { name: "robots", content: "noindex" },
@@ -28,7 +30,7 @@ export const Route = createFileRoute("/c/$token")({
 function SharedPanel() {
   const { token } = Route.useParams();
   const [preset, setPreset] = useState<Exclude<Preset, "custom">>("este-mes");
-  const q = useQuery({ queryKey: ["shared", token], queryFn: () => getSharedPanel({ data: { token } }) });
+  const q = useQuery({ queryKey: ["shared", token], queryFn: () => getSharedPanel({ data: { token } }), refetchInterval: (query) => query.state.error || query.state.data === null ? false : 60_000, retry: false });
   const range = presetRange(preset);
   if (q.isLoading) return <div className="mx-auto max-w-7xl p-8"><Skeleton className="h-96 rounded-2xl" /></div>;
   if (!q.data) return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Link inválido ou expirado.</div>;

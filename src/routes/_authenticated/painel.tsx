@@ -13,6 +13,7 @@ import { Dashboard } from "@/components/atlas/Dashboard";
 import { PanelTitle, PrintFooter } from "@/components/atlas/PanelHeader";
 import { useConfig } from "@/components/atlas/AppShell";
 import { loadPanelData } from "@/lib/panel-data";
+import { usePanelFreshness } from "@/hooks/use-panel-freshness";
 import { syncNow } from "@/lib/sync.functions";
 import { fmtDate, fmtDateTime, presetRange, type Preset } from "@/lib/format";
 
@@ -29,6 +30,8 @@ export const Route = createFileRoute("/_authenticated/painel")({
   validateSearch: search,
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Painel de Resultados · Atlas" },
       { name: "description", content: "Investimento, consultas, conversão, vendas, comissões e previsibilidade por cliente." },
       { property: "og:title", content: "Painel de Resultados · Atlas" },
@@ -47,6 +50,7 @@ const PRESETS: { v: Preset; l: string }[] = [
 ];
 
 function Painel() {
+  usePanelFreshness();
   const s = Route.useSearch();
   const nav = useNavigate({ from: "/painel" });
   const qc = useQueryClient();
@@ -54,7 +58,7 @@ function Painel() {
   const q = useQuery({ queryKey: ["panel"], queryFn: loadPanelData });
   const sync = useServerFn(syncNow);
   const mut = useMutation({
-    mutationFn: () => sync({ data: {} }),
+    mutationFn: () => sync({ data: s.cliente ? { clienteId: s.cliente } : {} }),
     onSuccess: (r) => {
       const err = r.filter((x) => !x.ok).length;
       err ? toast.warning(`Atualizado com ${err} portal(is) com erro`) : toast.success("Dados atualizados");

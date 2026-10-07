@@ -21,6 +21,8 @@ import type { Tables } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/_authenticated/clientes")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Clientes · Atlas" },
       { name: "description", content: "Cadastro dos Portais de Resultados lidos pelo painel." },
       { property: "og:title", content: "Clientes · Atlas" },
