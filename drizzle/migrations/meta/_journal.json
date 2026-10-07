@@ -8,6 +8,13 @@
       "when": 1791371843682,
       "tag": "0000_atlas_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791372072817,
+      "tag": "0001_claim_access_domain",
+      "breakpoints": true
     }
   ]
 }
