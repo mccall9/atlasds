@@ -43,9 +43,9 @@ export function StatusBadge({ s }: { s: string | null }) {
 
 type Audit = { title: string; rows: Venda[] } | null;
 
-function Section({ title, tone, children }: { title: string; tone?: Tone; children: ReactNode }) {
+function Section({ title, tone, children, className }: { title: string; tone?: Tone; children: ReactNode; className?: string }) {
   return (
-    <section className="space-y-3">
+    <section className={cn("report-section space-y-3", className)}>
       <h2 className={cn("text-xs font-bold uppercase tracking-[0.14em]", tone ? TONE[tone].title : "text-muted-foreground")}>{title}</h2>
       {children}
     </section>
@@ -58,7 +58,7 @@ function Card({ label, value, hint, icon: Icon, tone, onClick }: { label: string
       type="button"
       onClick={onClick}
       disabled={!onClick}
-      className={cn("group flex w-full items-start gap-4 rounded-2xl border bg-card p-5 text-left transition", onClick && "hover:-translate-y-0.5 hover:shadow-md")}
+      className={cn("report-metric group flex w-full items-start gap-4 rounded-2xl border bg-card p-5 text-left transition", onClick && "hover:-translate-y-0.5 hover:shadow-md")}
     >
       <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl", TONE[tone].icon)}>
         <Icon className="size-5" />
@@ -83,7 +83,7 @@ export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente
   const open = (title: string, rows: Venda[]) => () => setAudit({ title, rows });
 
   return (
-    <div className="space-y-10">
+    <div className="report-dashboard space-y-10">
       <Section title="Anúncios" tone="blue">
         {m.investido == null && <p className="text-xs text-muted-foreground">Sem investimento lançado no período.</p>}
         <div className={grid3}>
@@ -239,7 +239,8 @@ function LeadsTable({ leads, nomeCliente }: { leads: Venda[]; nomeCliente: (id: 
       ...filtered.map((r) => [r.lead_nome, nomeCliente(r.cliente_id), fmtDate(r.data_consulta), fmtDate(r.data_venda), fmtDate(r.data_cirurgia), r.procedimento, r.valor_fechado, r.status]),
     ]);
   return (
-    <Section title={`Leads no período · ${filtered.length} lead${filtered.length === 1 ? "" : "s"}`}>
+    <Section className="report-leads" title={`Leads no período · ${filtered.length} lead${filtered.length === 1 ? "" : "s"}`}>
+      {(q || st !== "todos") && <p className="print-only text-xs text-muted-foreground">{q ? `Busca: ${q}` : ""}{q && st !== "todos" ? " · " : ""}{st !== "todos" ? `Status: ${st}` : ""}</p>}
       <div className="rounded-2xl border bg-card p-4">
         <div className="mb-3 flex flex-wrap gap-2 no-print">
           <div className="relative min-w-56 flex-1">
@@ -255,7 +256,8 @@ function LeadsTable({ leads, nomeCliente }: { leads: Venda[]; nomeCliente: (id: 
           </Select>
           <Button variant="outline" onClick={exportCsv}><Download className="size-4" />Exportar CSV</Button>
         </div>
-        <div className="overflow-x-auto"><RowsTable rows={rows} nomeCliente={nomeCliente} /></div>
+        <div className="no-print overflow-x-auto"><RowsTable rows={rows} nomeCliente={nomeCliente} /></div>
+        <div className="print-only"><RowsTable rows={filtered} nomeCliente={nomeCliente} /></div>
         {pages > 1 && (
           <div className="mt-3 flex items-center justify-end gap-2 text-sm no-print">
             <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>Anterior</Button>

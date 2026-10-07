@@ -129,11 +129,38 @@
   }
 }
 
+.print-only { display: none; }
 @media print {
-  @page { size: A4; margin: 12mm; }
+  @page { size: A4 portrait; margin: 12mm 10mm 14mm; }
   .no-print { display: none !important; }
   .print-only { display: block !important; }
-  body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  section { break-inside: avoid; }
+  body { background: var(--card); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  main, .panel-report { max-width: none !important; padding: 0 !important; }
+  .report-title { display: block; }
+  .report-header { width: 100%; margin-bottom: 5mm; }
+  .report-dashboard { display: flex; flex-direction: column; gap: 5mm; }
+  .report-dashboard > * { margin: 0 !important; }
+  .report-section { break-inside: avoid; }
+  .report-section h2 { margin-bottom: 2mm; letter-spacing: 0; }
+  .report-section .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2mm; }
+  .report-metric { padding: 3mm; gap: 2mm; border-radius: 3mm; box-shadow: none; }
+  .report-metric > div:first-child { width: 7mm; height: 7mm; border-radius: 2mm; }
+  .report-metric svg { width: 4mm; height: 4mm; }
+  .report-metric .text-2xl { font-size: 14pt; line-height: 1.25; white-space: normal; overflow: visible; }
+  .report-metric .text-xs { font-size: 8pt; }
+  .report-section .truncate { overflow: visible; text-overflow: clip; white-space: normal; max-width: none; }
+  .report-section .overflow-auto, .report-section .overflow-x-auto { overflow: visible; }
+  .report-section table { width: 100%; table-layout: fixed; font-size: 7pt; }
+  .report-section th, .report-section td { padding: 1.5mm 1mm; height: auto; overflow-wrap: anywhere; white-space: normal; }
+  .report-section td span { white-space: normal; font-size: 6.5pt; }
+  .report-section thead { display: table-header-group; }
+  .report-section tr { break-inside: avoid; }
+  .report-section h2, .report-section h3 { break-after: avoid; }
+  .report-leads { order: 1; break-before: page; break-inside: auto; }
+  .report-leads > .bg-card { border: 0; padding: 0; }
+  .report-leads th:first-child { width: 16%; }
+  .report-leads th:nth-child(2) { width: 13%; }
+  .report-leads th:last-child { width: 15%; }
+  .report-warning { break-inside: avoid; }
+  .panel-report > .print-only:last-child { margin-top: 5mm; }
 }
-.print-only { display: none; }

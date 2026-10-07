@@ -15,6 +15,7 @@ import { useConfig } from "@/components/atlas/AppShell";
 import { loadPanelData } from "@/lib/panel-data";
 import { usePanelFreshness } from "@/hooks/use-panel-freshness";
 import { syncNow } from "@/lib/sync.functions";
+import { printPanel } from "@/lib/print-panel";
 import { fmtDate, fmtDateTime, presetRange, type Preset } from "@/lib/format";
 
 const search = z.object({
@@ -85,15 +86,15 @@ function Painel() {
   const clienteNome = s.cliente ? data?.clientes.find((c) => c.id === s.cliente)?.nome ?? "" : "Todos os clientes (carteira)";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <PanelTitle logoUrl={cfg.data?.logo_url} de={range.de} ate={range.ate} clienteNome={clienteNome} />
+    <div className="panel-report space-y-6">
+      <div className="report-title flex flex-wrap items-end justify-between gap-4">
+        <PanelTitle logoUrl={cfg.data?.logo_url} de={range.de} ate={range.ate} clienteNome={clienteNome} lastSync={lastSync} filters={[s.hunter && `Hunter: ${s.hunter}`, s.perf && `Performance: ${s.perf}`].filter(Boolean).join(" · ")} />
         <div className="no-print flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Última atualização: {fmtDateTime(lastSync)}</span>
+          <span className="text-xs text-muted-foreground">Última atualização: {fmtDateTime(lastSync)}<br />Atualização automática: a cada 15 minutos</span>
           <Button variant="outline" size="sm" onClick={() => mut.mutate()} disabled={mut.isPending}>
             <RefreshCw className={mut.isPending ? "size-4 animate-spin" : "size-4"} />{mut.isPending ? "Atualizando…" : "Atualizar agora"}
           </Button>
-          <Button size="sm" onClick={() => window.print()}><FileDown className="size-4" />Exportar PDF</Button>
+          <Button size="sm" disabled={!data || q.isError || mut.isPending} onClick={() => void printPanel(clienteNome, range.de, range.ate)}><FileDown className="size-4" />Exportar PDF</Button>
         </div>
       </div>
 
@@ -132,7 +133,7 @@ function Painel() {
       </div>
 
       {falhas.length > 0 && (
-        <div className="no-print space-y-1 rounded-xl border border-g-orange/30 bg-g-orange-soft px-4 py-2 text-xs text-g-orange">
+        <div className="report-warning space-y-1 rounded-xl border border-g-orange/30 bg-g-orange-soft px-4 py-2 text-xs text-g-orange">
           {falhas.map((c) => <div key={c.id} className="flex items-start gap-2"><AlertTriangle className="mt-0.5 size-3.5 shrink-0" /><span>{c.last_sync_at ? `${c.nome}: exibindo dados da última leitura (${fmtDateTime(c.last_sync_at)}). A atualização não foi concluída.` : `Dados de ${c.nome} ainda indisponíveis.`}</span></div>)}
         </div>
       )}

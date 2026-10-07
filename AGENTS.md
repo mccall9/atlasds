@@ -10,13 +10,14 @@
 <!-- LOVABLE:END -->
 
 ## Atlas Painel
-- Drive file watches persist hashed channel tokens and monotonic event counters; accepted events enqueue authenticated processing via pg_net, while the existing safety cron reconciles and renews channels. Why: event-driven updates without idle polling or modifying Portais.
+- Automatic Portal reads run only through the scheduled sync; old Drive notifications are acknowledged without dispatch and watch activation is disabled. Why: avoid overlapping automatic reads and quota bursts.
 - All mirror sync entry points acquire a per-client database lease. Why: notifications, manual actions and safety cron must not replace the same rows concurrently.
 - Open dashboards check mirrored sync status every 30 seconds (shared panels every 60 seconds), never polling Sheets directly. Why: reflect completed syncs without consuming Google quotas.
 - Sheets reads are sequential across clients with bounded transient-error backoff; permanent 4xx fail without retry. Why: avoid quota bursts and preserve provider error details.
-- Drive processing retains pending notifications after transient read failures; dashboards distinguish stale snapshots from unavailable data. Why: quota failures must not discard edits or misrepresent saved results.
+- Dashboards distinguish stale snapshots from unavailable data and preserve warnings in printed reports. Why: saved results must not be misrepresented after a failed read.
 - Portais (Google Sheets) are read-only sources: sync only reads via the Google Sheets connector and mirrors into DB tables (src/lib/sync.server.ts); the UI reads only from the DB. Why: other automations depend on the sheets staying intact.
 - Sheet columns/tabs are matched by normalized header/title (trim, lowercase, no accents), never by position. Why: headers vary across Portais.
 - Metrics are computed client-side in src/lib/metrics.ts from mirrored rows so every card can list its source rows (audit). Why: auditability requirement.
 - Access: claim_access() RPC assigns roles by allowed email domain in configuracoes; first matching user becomes admin. Why: domain-restricted team access without hand-managed invites.
-- Scheduled sync hits /api/public/cron/sync-portais; it is idempotent and throttled to once per 10 min. Why: route is publicly reachable.
+- Scheduled sync hits /api/public/cron/sync-portais and throttles recent reads; manual updates remain authenticated. Why: limit read-only endpoint replay and provider quotas.
+- Both panels export through the shared print helper and semantic A4 print styles, with all filtered leads instead of the visible page. Why: keep reports complete, vector-based and consistent with displayed metrics.
