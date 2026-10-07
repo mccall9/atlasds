@@ -8,13 +8,7 @@ export const activateDriveDetection = createServerFn({ method: "POST" })
     if (error || !admin) throw new Error("Apenas administradores podem ativar a detecção");
     const { ensureDriveWatches } = await import("./drive-watch.server");
     const results = await ensureDriveWatches();
-    if (results.some((r) => !r.ok)) return { results, scheduled: false };
-    const secret = process.env["LOVABLE_CRON_SECRET"];
-    if (!secret) throw new Error("Autorização do agendamento indisponível");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: scheduleError } = await (supabaseAdmin as any).rpc("schedule_portal_drive_worker", { _secret: secret });
-    if (scheduleError) throw scheduleError;
-    return { results, scheduled: true };
+    return { results };
   });
 
 export const getDriveDetection = createServerFn({ method: "GET" })

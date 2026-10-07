@@ -64,7 +64,7 @@ export async function ensureDriveWatches() {
 
 export async function processDriveChanges() {
   const { data: rows, error } = await db.from("portal_drive_watches").select("id,cliente_id,spreadsheet_id,last_version,pending_at")
-    .not("pending_at", "is", null).order("pending_at").limit(4);
+    .not("pending_at", "is", null).order("pending_at").limit(20);
   if (error) throw error;
   const results: { ok: boolean; clienteId: string }[] = [];
   for (const row of rows) {
@@ -77,6 +77,7 @@ export async function processDriveChanges() {
     try {
       const metadata = await drive(`/files/${client.spreadsheet_id}?fields=version`);
       const result = metadata.version === row.last_version ? { ok: true } : await syncCliente(client);
+      if ("skipped" in result && result.skipped) continue;
       if (result.ok) {
         // Never clear an edit that arrived while the sync was running.
         const { error: updateError } = await db.from("portal_drive_watches").update({ pending_at: null, last_version: metadata.version, last_error: null }).eq("id", row.id).eq("pending_at", row.pending_at);

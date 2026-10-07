@@ -21,7 +21,13 @@ export const Route = createFileRoute("/api/public/google-drive/changes")({
       _message: parsed.data.message, _changed: parsed.data.state !== "sync",
     });
     if (error) { console.error(error.message); return new Response("Notification storage failed", { status: 503 }); }
+    if (accepted && parsed.data.state !== "sync") {
+      const secret = process.env["LOVABLE_CRON_SECRET"];
+      if (!secret) return new Response("Notification authorization unavailable", { status: 503 });
+      const { error: dispatchError } = await (supabaseAdmin as any).rpc("dispatch_portal_drive_worker", { _secret: secret });
+      if (dispatchError) { console.error(dispatchError.message); return new Response("Notification dispatch failed", { status: 503 }); }
+    }
     // Duplicate/expired/wrong-token events never trigger work; no state disclosure.
-    return new Response(null, { status: accepted ? 204 : 204 });
+    return new Response(null, { status: 204 });
   } } },
 });

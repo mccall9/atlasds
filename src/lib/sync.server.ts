@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { randomUUID } from "node:crypto";
 import { readSheets } from "./sheets-request.server";
 import {
   MESES, canonicalStatus, emptyToNull, norm, parseBool, parseDate, parseNumber,
@@ -145,6 +146,10 @@ async function replace(table: string, clienteId: string, rows: Record<string, un
 
 export async function syncCliente(c: { id: string; spreadsheet_id: string; layout: string; nome: string }) {
   const db = supabaseAdmin as any;
+  const leaseToken = randomUUID();
+  const { data: acquired, error: leaseError } = await db.rpc("acquire_portal_sync", { _cliente_id: c.id, _token: leaseToken });
+  if (leaseError) return { ok: false, erro: leaseError.message as string };
+  if (!acquired) return { ok: true, skipped: true };
   const { data: log } = await db.from("sync_logs").insert({ cliente_id: c.id }).select("id").single();
   try {
     const meta = await gget(`/spreadsheets/${c.spreadsheet_id}?fields=sheets.properties.title`);
@@ -186,6 +191,8 @@ export async function syncCliente(c: { id: string; spreadsheet_id: string; layou
     await db.from("clientes").update({ last_sync_error: msg }).eq("id", c.id);
     await db.from("sync_logs").update({ fim: new Date().toISOString(), status: "erro", erro: msg }).eq("id", log?.id);
     return { ok: false, erro: msg };
+  } finally {
+    await db.from("portal_sync_leases").delete().eq("cliente_id", c.id).eq("lease_token", leaseToken);
   }
 }
 

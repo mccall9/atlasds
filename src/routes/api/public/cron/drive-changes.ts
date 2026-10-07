@@ -5,9 +5,8 @@ export const Route = createFileRoute("/api/public/cron/drive-changes")({
   server: { handlers: { POST: async ({ request }) => {
     const denied = await authenticateCronRequest(request);
     if (denied) return denied;
-    const { ensureDriveWatches, processDriveChanges } = await import("@/lib/drive-watch.server");
+    const { processDriveChanges } = await import("@/lib/drive-watch.server");
     const processed = await processDriveChanges();
-    const watches = await ensureDriveWatches();
-    return Response.json({ processed: processed.length, errors: processed.filter((r) => !r.ok).length + watches.filter((r) => !r.ok).length });
+    return Response.json({ processed: processed.length, errors: processed.filter((r) => !r.ok).length });
   } } },
 });

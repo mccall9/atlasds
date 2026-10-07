@@ -555,6 +555,10 @@ export type Database = {
       }
       can_view_cliente: { Args: { _cliente_id: string }; Returns: boolean }
       claim_access: { Args: never; Returns: string }
+      dispatch_portal_drive_worker: {
+        Args: { _secret: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
