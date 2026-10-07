@@ -10,6 +10,8 @@
 <!-- LOVABLE:END -->
 
 ## Atlas Painel
+- Drive file watches persist per-channel hashed tokens and monotonic event counters; authenticated cron drains pending edits each minute and renews daily channels. Why: durable near-real-time updates without modifying Portais.
+- All mirror sync entry points acquire a per-client database lease. Why: notifications, manual actions and safety cron must not replace the same rows concurrently.
 - Open dashboards check mirrored sync status every 30 seconds (shared panels every 60 seconds), never polling Sheets directly. Why: reflect completed syncs without consuming Google quotas.
 - Sheets reads are sequential across clients with bounded transient-error backoff; permanent 4xx fail without retry. Why: avoid quota bursts and preserve provider error details.
 - Portais (Google Sheets) are read-only sources: sync only reads via the Google Sheets connector and mirrors into DB tables (src/lib/sync.server.ts); the UI reads only from the DB. Why: other automations depend on the sheets staying intact.
