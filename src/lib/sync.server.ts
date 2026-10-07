@@ -97,23 +97,24 @@ function parseMetas(grid: Grid, clienteId: string, ano: number) {
 }
 
 function parseAcompanhamento(grid: Grid, clienteId: string) {
-  const hi = grid.findIndex((r) => r.some((c) => norm(c).startsWith("semana")));
+  // Layout: header row with "SEMANA 1..5" across columns, next row with week start dates,
+  // then metric rows (CONSULTAS AGENDADAS, COMPARECIMENTOS, VENDAS REALIZADAS, CIRURGIAS REALIZADAS).
+  const hi = grid.findIndex((r) => r.some((c) => /^semana \d/.test(norm(c))));
   if (hi < 0) return [];
-  const h = (grid[hi] ?? []).map(norm);
-  const find = (...keys: string[]) => h.findIndex((x) => keys.some((k) => x.includes(k)));
-  const cS = find("semana"), cC = find("consulta"), cCo = find("comparec"), cV = find("venda"), cCi = find("cirurgia");
-  const out: Record<string, unknown>[] = [];
-  grid.slice(hi + 1).forEach((row, i) => {
-    const label = emptyToNull(row[cS]);
-    if (!label || norm(label).startsWith("meta") || norm(label).startsWith("total")) return;
-    const vals = [cC, cCo, cV, cCi].map((c) => (c >= 0 ? parseNumber(row[c]) : null));
-    if (vals.every((v) => v == null)) return;
-    out.push({
-      cliente_id: clienteId, ordem: i, semana_label: label, semana_inicio: parseDate(label),
-      consultas_agendadas: vals[0], comparecimentos: vals[1], vendas: vals[2], cirurgias: vals[3], raw: row,
-    });
-  });
-  return out;
+  const head = grid[hi] ?? [];
+  const dates = grid[hi + 1] ?? [];
+  const cols = head.map((c, i) => (/^semana \d/.test(norm(c)) ? i : -1)).filter((i) => i >= 0);
+  const metricRow = (key: string) => grid.slice(hi + 1, hi + 12).find((r) => norm(r[0]).startsWith(key));
+  const rC = metricRow("consultas"), rCo = metricRow("comparec"), rV = metricRow("vendas"), rCi = metricRow("cirurgias");
+  const mesLabel = emptyToNull(rC?.[2]) ?? "";
+  return cols.map((c, i) => ({
+    cliente_id: clienteId, ordem: i,
+    semana_label: `${String(head[c]).trim()}${mesLabel ? ` · ${mesLabel}` : ""}`,
+    semana_inicio: parseDate(dates[c]),
+    consultas_agendadas: parseNumber(rC?.[c]), comparecimentos: parseNumber(rCo?.[c]),
+    vendas: parseNumber(rV?.[c]), cirurgias: parseNumber(rCi?.[c]),
+    raw: { head: head[c], date: dates[c] },
+  }));
 }
 
 function parseRegras(grid: Grid, clienteId: string, layout: string) {
