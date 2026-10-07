@@ -10,12 +10,29 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as ApiPublicCronSyncPortaisRouteImport } from './routes/api/public/cron/sync-portais'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPublicCronSyncPortaisRoute =
   ApiPublicCronSyncPortaisRouteImport.update({
@@ -26,27 +43,42 @@ const ApiPublicCronSyncPortaisRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/painel': typeof AuthenticatedPainelRoute
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/painel': typeof AuthenticatedPainelRoute
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/cron/sync-portais'
+  fullPaths: '/' | '/auth' | '/painel' | '/api/public/cron/sync-portais'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/cron/sync-portais'
-  id: '__root__' | '/' | '/api/public/cron/sync-portais'
+  to: '/' | '/auth' | '/painel' | '/api/public/cron/sync-portais'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/painel'
+    | '/api/public/cron/sync-portais'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
   ApiPublicCronSyncPortaisRoute: typeof ApiPublicCronSyncPortaisRoute
 }
 
@@ -59,6 +91,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/painel': {
+      id: '/_authenticated/painel'
+      path: '/painel'
+      fullPath: '/painel'
+      preLoaderRoute: typeof AuthenticatedPainelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/cron/sync-portais': {
       id: '/api/public/cron/sync-portais'
       path: '/api/public/cron/sync-portais'
@@ -69,8 +122,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
   ApiPublicCronSyncPortaisRoute: ApiPublicCronSyncPortaisRoute,
 }
 export const routeTree = rootRouteImport
