@@ -110,6 +110,7 @@ export type Database = {
         Row: {
           dominio_permitido: string | null
           id: number
+          logo_url: string | null
           pct_atlas: number
           pct_hunter: number
           pct_performance: number
@@ -119,6 +120,7 @@ export type Database = {
         Insert: {
           dominio_permitido?: string | null
           id?: number
+          logo_url?: string | null
           pct_atlas?: number
           pct_hunter?: number
           pct_performance?: number
@@ -128,6 +130,7 @@ export type Database = {
         Update: {
           dominio_permitido?: string | null
           id?: number
+          logo_url?: string | null
           pct_atlas?: number
           pct_hunter?: number
           pct_performance?: number

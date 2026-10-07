@@ -1,0 +1,1 @@
+alter table public.configuracoes add column logo_url text;
