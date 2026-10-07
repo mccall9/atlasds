@@ -10,33 +10,44 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicCronSyncPortaisRouteImport } from './routes/api/public/cron/sync-portais'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronSyncPortaisRoute =
+  ApiPublicCronSyncPortaisRouteImport.update({
+    id: '/api/public/cron/sync-portais',
+    path: '/api/public/cron/sync-portais',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/public/cron/sync-portais'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/public/cron/sync-portais'
+  id: '__root__' | '/' | '/api/public/cron/sync-portais'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicCronSyncPortaisRoute: typeof ApiPublicCronSyncPortaisRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +59,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/sync-portais': {
+      id: '/api/public/cron/sync-portais'
+      path: '/api/public/cron/sync-portais'
+      fullPath: '/api/public/cron/sync-portais'
+      preLoaderRoute: typeof ApiPublicCronSyncPortaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicCronSyncPortaisRoute: ApiPublicCronSyncPortaisRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
