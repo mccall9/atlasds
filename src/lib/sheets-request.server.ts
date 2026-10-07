@@ -1,15 +1,22 @@
 // Read-only requests, with bounded retries for transient Google failures.
 export async function readSheets(url: string, headers: Record<string, string>) {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const response = await fetch(url, { headers });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let response: Response;
+    try {
+      response = await fetch(url, { headers });
+    } catch (error) {
+      if (attempt === 2) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 2000 * 2 ** attempt));
+      continue;
+    }
     if (response.ok) return response.json();
     const body = await response.text();
     console.error(`Google Sheets [${response.status}]: ${body}`);
-    if (attempt === 0 && (response.status === 429 || response.status >= 500)) {
+    if (attempt < 2 && (response.status === 429 || response.status >= 500)) {
       const retryAfter = response.headers.get("Retry-After");
       const seconds = retryAfter ? Number(retryAfter) : NaN;
       const dateDelay = retryAfter ? Date.parse(retryAfter) - Date.now() : NaN;
-      const delay = Number.isFinite(seconds) ? seconds * 1000 : Number.isFinite(dateDelay) ? dateDelay : response.status === 429 ? 65_000 : 2_000;
+      const delay = Number.isFinite(seconds) ? seconds * 1000 : Number.isFinite(dateDelay) ? dateDelay : (response.status === 429 ? 65_000 : 2_000) * 2 ** attempt;
       await new Promise((resolve) => setTimeout(resolve, Math.min(120_000, Math.max(1000, delay))));
       continue;
     }

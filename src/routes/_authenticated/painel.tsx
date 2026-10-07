@@ -133,7 +133,7 @@ function Painel() {
 
       {falhas.length > 0 && (
         <div className="no-print space-y-1 rounded-xl border border-g-orange/30 bg-g-orange-soft px-4 py-2 text-xs text-g-orange">
-          {falhas.map((c) => <div key={c.id} className="flex items-center gap-2"><AlertTriangle className="size-3.5" />Dados de {c.nome} indisponíveis</div>)}
+          {falhas.map((c) => <div key={c.id} className="flex items-start gap-2"><AlertTriangle className="mt-0.5 size-3.5 shrink-0" /><span>{c.last_sync_at ? `${c.nome}: exibindo dados da última leitura (${fmtDateTime(c.last_sync_at)}). A atualização não foi concluída.` : `Dados de ${c.nome} ainda indisponíveis.`}</span></div>)}
         </div>
       )}
 

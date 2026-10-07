@@ -24,4 +24,32 @@ describe("Sheets read resilience", () => {
     await expect(result).resolves.toEqual({ values: [["real"]] });
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
+  it("waits through two quota windows before recovering", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce(new Response("quota", { status: 429 }))
+      .mockResolvedValueOnce(new Response("quota", { status: 429 }))
+      .mockResolvedValueOnce(Response.json({ values: [["recovered"]] }));
+    vi.stubGlobal("fetch", fetcher);
+    const result = readSheets("https://example.test", {});
+    await vi.advanceTimersByTimeAsync(64_999);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(119_999);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    await expect(result).resolves.toEqual({ values: [["recovered"]] });
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+  it("recovers from a temporary connection failure", async () => {
+    vi.useFakeTimers();
+    const fetcher = vi.fn().mockRejectedValueOnce(new TypeError("fetch failed"))
+      .mockResolvedValueOnce(Response.json({ values: [["real"]] }));
+    vi.stubGlobal("fetch", fetcher);
+    const result = readSheets("https://example.test", {});
+    await vi.advanceTimersByTimeAsync(2000);
+    await expect(result).resolves.toEqual({ values: [["real"]] });
+  });
 });

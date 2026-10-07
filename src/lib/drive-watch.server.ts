@@ -83,12 +83,14 @@ export async function processDriveChanges() {
         const { error: updateError } = await db.from("portal_drive_watches").update({ pending_at: null, last_version: metadata.version, last_error: null }).eq("id", row.id).eq("pending_at", row.pending_at);
         if (updateError) throw updateError;
       } else if ("erro" in result && result.erro) {
-        await db.from("portal_drive_watches").update({ pending_at: null, last_error: result.erro }).eq("id", row.id).eq("pending_at", row.pending_at);
+        const transient = /Google Sheets \[(429|5\d\d)\]|fetch failed|network/i.test(result.erro);
+        await db.from("portal_drive_watches").update({ ...(transient ? {} : { pending_at: null }), last_error: result.erro }).eq("id", row.id).eq("pending_at", row.pending_at);
       }
       results.push({ ok: result.ok, clienteId: client.id });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      await db.from("portal_drive_watches").update({ pending_at: null, last_error: message }).eq("id", row.id).eq("pending_at", row.pending_at);
+      const transient = /Google (?:Drive|Sheets) \[(429|5\d\d)\]|fetch failed|network/i.test(message);
+      await db.from("portal_drive_watches").update({ ...(transient ? {} : { pending_at: null }), last_error: message }).eq("id", row.id).eq("pending_at", row.pending_at);
       console.error(message);
       results.push({ ok: false, clienteId: client.id });
     }
