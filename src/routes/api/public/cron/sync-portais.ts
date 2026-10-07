@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
-// Called every 15 min by the database scheduler. The work is an idempotent,
-// read-only mirror of the Portais, throttled to once per 10 min, so a replayed
-// call cannot do harm beyond refreshing the same data.
+// Scheduled reads only; Drive notifications no longer initiate sync.
 export const Route = createFileRoute("/api/public/cron/sync-portais")({
   server: {
     handlers: {
@@ -15,11 +13,9 @@ export const Route = createFileRoute("/api/public/cron/sync-portais")({
           if (denied) return denied;
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { ensureDriveWatches, processDriveChanges } = await import("@/lib/drive-watch.server");
-        await processDriveChanges();
-        await ensureDriveWatches();
-        const since = new Date(Date.now() - 10 * 60_000).toISOString();
-        const { count } = await (supabaseAdmin as any).from("sync_logs").select("id", { count: "exact", head: true }).gte("inicio", since);
+        const since = new Date(Date.now() - 15 * 60_000).toISOString();
+        const { count, error } = await supabaseAdmin.from("sync_logs").select("id", { count: "exact", head: true }).gte("inicio", since);
+        if (error) return Response.json({ error: "Sync status unavailable" }, { status: 503 });
         if ((count ?? 0) > 0) return Response.json({ ok: true, skipped: true });
         const { syncTodos } = await import("@/lib/sync.server");
         const results = await syncTodos();

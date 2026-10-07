@@ -6,9 +6,7 @@ export const activateDriveDetection = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { data: admin, error } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (error || !admin) throw new Error("Apenas administradores podem ativar a detecção");
-    const { ensureDriveWatches } = await import("./drive-watch.server");
-    const results = await ensureDriveWatches();
-    return { results };
+    throw new Error("A atualização automática está configurada para cada 15 minutos.");
   });
 
 export const getDriveDetection = createServerFn({ method: "GET" })

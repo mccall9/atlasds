@@ -1,10 +1,12 @@
 # Roadmap
+- [ ] Alterar a atualização automática para somente a cada 15 minutos, desativando leituras por avisos do Drive e conferindo o agendamento.
+- [ ] Melhorar PDF A4 com cabeçalho, filtros, tabelas completas e quebras de página; validar visualmente com dados reais.
 - [ ] Corrigir avisos de indisponibilidade por limite do Google: conferir causa, reforçar recuperação e validar com dados reais.
 - [x] Orientar quais acessos Meta/BM são necessários por médico; integração direta requer configuração adicional, não solicitar senhas.
 - [x] Liberar administrador para jhon.cs@assessoriaatlas.com.
 - [x] Conferir atraso, tratar limite de leituras e verificar painel aberto atualizando automaticamente após sincronização.
 - [x] Implementar detecção pelo Google Drive, conectar e registrar avisos para os 11 Portais; manter cron de segurança.
-- [ ] Verificar edição real chegando pelo Google — bloqueado até publicar esta versão e Jhonatan editar um Portal; não alterar planilhas para teste.
+- [x] Verificação de edição pelo Drive substituída, a pedido de Jhonatan, pela atualização a cada 15 minutos.
 - [x] Schema, 11 clientes, login, conector Google Sheets
 - [x] Domínio de acesso: @assessoriaatlas.com
 - [x] Sync + cron 15 min (ativo após publicar)
