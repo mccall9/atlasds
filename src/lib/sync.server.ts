@@ -67,9 +67,10 @@ function parseVendas(grid: Grid, clienteId: string) {
       else if (f === "status") r[f] = canonicalStatus(v);
       else r[f] = emptyToNull(v);
     });
-    if (!r.lead_nome) return;
-    if (r.comparecimentos == null) r.comparecimentos = 0;
-    if (typeof r.origem === "string") r.origem = r.origem.toUpperCase();
+    if (!r["lead_nome"]) return;
+    if (r["comparecimentos"] == null) r["comparecimentos"] = 0;
+    const o = r["origem"];
+    if (typeof o === "string") r["origem"] = o.toUpperCase();
     out.push(r);
   });
   return out;
@@ -98,7 +99,7 @@ function parseMetas(grid: Grid, clienteId: string, ano: number) {
 function parseAcompanhamento(grid: Grid, clienteId: string) {
   const hi = grid.findIndex((r) => r.some((c) => norm(c).startsWith("semana")));
   if (hi < 0) return [];
-  const h = grid[hi].map(norm);
+  const h = (grid[hi] ?? []).map(norm);
   const find = (...keys: string[]) => h.findIndex((x) => keys.some((k) => x.includes(k)));
   const cS = find("semana"), cC = find("consulta"), cCo = find("comparec"), cV = find("venda"), cCi = find("cirurgia");
   const out: Record<string, unknown>[] = [];
@@ -163,10 +164,10 @@ export async function syncCliente(c: { id: string; spreadsheet_id: string; layou
     const data = await gget(`/spreadsheets/${c.spreadsheet_id}/values:batchGet?${params.toString()}`);
     const vr: Grid[] = (data.valueRanges ?? []).map((v: any) => v.values ?? []);
     let idx = 0;
-    const gV = vr[idx++];
-    const gP = tP ? vr[idx++] : [];
-    const gA = tA ? vr[idx++] : [];
-    const gR = tR ? vr[idx++] : [];
+    const gV = vr[idx++] ?? [];
+    const gP = (tP ? vr[idx++] : []) ?? [];
+    const gA = (tA ? vr[idx++] : []) ?? [];
+    const gR = (tR ? vr[idx++] : []) ?? [];
 
     const vendas = parseVendas(gV, c.id);
     const metas = parseMetas(gP, c.id, new Date().getFullYear());
