@@ -14,20 +14,7 @@ export const Route = createFileRoute("/api/public/google-drive/changes")({
       state: request.headers.get("x-goog-resource-state"),
     });
     if (!parsed.success) return new Response("Invalid notification", { status: 400 });
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { hashChannelToken } = await import("@/lib/drive-watch.server");
-    const { data: accepted, error } = await (supabaseAdmin as any).rpc("receive_portal_drive_event", {
-      _id: parsed.data.id, _hash: hashChannelToken(parsed.data.token), _resource: parsed.data.resource,
-      _message: parsed.data.message, _changed: parsed.data.state !== "sync",
-    });
-    if (error) { console.error(error.message); return new Response("Notification storage failed", { status: 503 }); }
-    if (accepted && parsed.data.state !== "sync") {
-      const secret = process.env["LOVABLE_CRON_SECRET"];
-      if (!secret) return new Response("Notification authorization unavailable", { status: 503 });
-      const { error: dispatchError } = await (supabaseAdmin as any).rpc("dispatch_portal_drive_worker", { _secret: secret });
-      if (dispatchError) { console.error(dispatchError.message); return new Response("Notification dispatch failed", { status: 503 }); }
-    }
-    // Duplicate/expired/wrong-token events never trigger work; no state disclosure.
+    // Acknowledge old channels without storing or dispatching events.
     return new Response(null, { status: 204 });
   } } },
 });
