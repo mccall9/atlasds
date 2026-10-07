@@ -50,7 +50,7 @@ const DATES = ["data_consulta", "data_venda", "data_cirurgia"];
 
 function parseVendas(grid: Grid, clienteId: string) {
   if (!grid.length) return [];
-  const header = grid[0].map((h) => {
+  const header = (grid[0] ?? []).map((h) => {
     const n = norm(h);
     return VENDAS_MAP[n] ?? (n.startsWith("comissao atlas") ? "comissao_atlas" : n.startsWith("comissao hunter") ? "comissao_hunter" : n.startsWith("comissao extra") ? "comissao_extra" : n.startsWith("valor fechado") ? "valor_fechado" : null);
   });
