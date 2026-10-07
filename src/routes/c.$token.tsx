@@ -34,6 +34,7 @@ function SharedPanel() {
   if (!q.data) return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Link inválido ou expirado.</div>;
   const data = q.data as unknown as PanelData;
   const c = data.clientes[0];
+  if (!c) return null;
   return (
     <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">

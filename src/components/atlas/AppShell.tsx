@@ -29,7 +29,7 @@ export function useConfig() {
   });
 }
 
-export function Logo({ url }: { url?: string | null }) {
+export function Logo({ url }: { url?: string | null | undefined }) {
   return url ? (
     <img src={url} alt="Atlas Assessoria" className="h-9 w-auto object-contain" />
   ) : (

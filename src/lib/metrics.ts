@@ -28,8 +28,8 @@ export const isSold = (r: Venda) =>
 
 function monthsIn(de: string, ate: string) {
   const out: { ano: number; mes: number }[] = [];
-  let [y, m] = de.split("-").map(Number);
-  const [ye, me] = ate.split("-").map(Number);
+  let [y = 0, m = 1] = de.split("-").map(Number);
+  const [ye = 0, me = 1] = ate.split("-").map(Number);
   while (y < ye || (y === ye && m <= me)) { out.push({ ano: y, mes: m }); m++; if (m > 12) { m = 1; y++; } }
   return out;
 }
@@ -74,7 +74,7 @@ export function computeMetrics(d: PanelData, clienteIds: string[], de: string, a
   const fatFut = sum(futuros, (r) => r.valor_fechado);
   const meta = metaDoPeriodo(d, clienteIds, de, ate);
 
-  const [ay, am] = ate.split("-").map(Number);
+  const [ay = 0, am = 1] = ate.split("-").map(Number);
   const pipeline = [1, 2, 3].map((k) => {
     const dt = new Date(ay, am - 1 + k, 1);
     const y = dt.getFullYear(), m = dt.getMonth() + 1;

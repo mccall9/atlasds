@@ -73,7 +73,7 @@ export function canonicalStatus(v: unknown): string | null {
 
 export function extractSpreadsheetId(input: string): string | null {
   const m = /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/.exec(input);
-  if (m) return m[1];
+  if (m?.[1]) return m[1];
   const t = input.trim();
   return /^[a-zA-Z0-9-_]{20,}$/.test(t) ? t : null;
 }

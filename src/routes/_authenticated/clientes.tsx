@@ -50,10 +50,10 @@ function Clientes() {
   };
   const save = async () => {
     const id = extractSpreadsheetId(f.url);
-    if (!f.nome || !id) return toast.error("Informe o nome e uma URL válida do Portal");
+    if (!f.nome || !id) { toast.error("Informe o nome e uma URL válida do Portal"); return; }
     const row = { nome: f.nome, spreadsheet_id: id, hunter: f.hunter || null, performance: f.performance || null, layout: f.layout, meta_mensal_override: f.meta ? Number(f.meta.replace(",", ".")) : null, ativo: f.ativo };
     const { error } = edit === "new" ? await supabase.from("clientes").insert(row) : await supabase.from("clientes").update(row).eq("id", (edit as Cliente).id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Cliente salvo");
     setEdit(null);
     qc.invalidateQueries();
@@ -63,7 +63,7 @@ function Clientes() {
     if (!token) {
       token = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, "0")).join("");
       const { error } = await supabase.from("clientes").update({ share_token: token }).eq("id", c.id);
-      if (error) return toast.error(error.message);
+      if (error) { toast.error(error.message); return; }
       qc.invalidateQueries({ queryKey: ["clientes"] });
     }
     await navigator.clipboard.writeText(`${window.location.origin}/c/${token}`);

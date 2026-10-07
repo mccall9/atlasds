@@ -36,7 +36,7 @@ function Config() {
       pct_total: n(f.pct_total), pct_hunter: n(f.pct_hunter), pct_performance: n(f.pct_performance), pct_atlas: n(f.pct_atlas),
       dominio_permitido: f.dominio_permitido.replace(/^@/, "") || null, logo_url: f.logo_url || null, updated_at: new Date().toISOString(),
     }).eq("id", 1);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Configurações salvas");
     qc.invalidateQueries();
   };

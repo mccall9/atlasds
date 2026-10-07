@@ -50,8 +50,8 @@ function AuthPage() {
 
   const google = async () => {
     const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin, extraParams: { hd: "assessoriaatlas.com", prompt: "select_account" } });
-    if (r.error) return toast.error("Falha no login com Google");
-    if (r.redirected) return;
+    if (r.error) { toast.error("Falha no login com Google"); return; }
+    if (r.redirected) { return; }
     nav({ to: "/painel" });
   };
 

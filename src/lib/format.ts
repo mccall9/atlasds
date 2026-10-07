@@ -10,7 +10,7 @@ export const fmtPct = (n: number | null | undefined) =>
 
 export function fmtDate(iso: string | null | undefined) {
   if (!iso) return "—";
-  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  const [y = 0, m = 1, d = 1] = iso.slice(0, 10).split("-").map(Number);
   return `${d} ${MES_CURTO[m - 1]} ${y}`;
 }
 export function fmtDateTime(iso: string | null | undefined) {

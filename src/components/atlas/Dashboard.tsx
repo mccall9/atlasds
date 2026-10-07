@@ -75,7 +75,7 @@ function Card({ label, value, hint, icon: Icon, tone, onClick }: { label: string
 const grid3 = "grid grid-cols-1 gap-4 md:grid-cols-3";
 
 export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente }: {
-  data: PanelData; clienteIds: string[]; de: string; ate: string; carteira: boolean; onSelectCliente?: (id: string) => void;
+  data: PanelData; clienteIds: string[]; de: string; ate: string; carteira: boolean; onSelectCliente?: ((id: string) => void) | undefined;
 }) {
   const m = useMemo(() => computeMetrics(data, clienteIds, de, ate), [data, clienteIds, de, ate]);
   const [audit, setAudit] = useState<Audit>(null);
@@ -340,7 +340,7 @@ function Evolucao({ data, clienteIds, m }: { data: PanelData; clienteIds: string
   );
 }
 
-function Carteira({ data, clienteIds, de, ate, onSelect }: { data: PanelData; clienteIds: string[]; de: string; ate: string; onSelect?: (id: string) => void }) {
+function Carteira({ data, clienteIds, de, ate, onSelect }: { data: PanelData; clienteIds: string[]; de: string; ate: string; onSelect?: ((id: string) => void) | undefined }) {
   const rows = clienteIds.map((id) => {
     const m = computeMetrics(data, [id], de, ate);
     const pct = m.meta.min ? (m.fatPrev ?? 0) / m.meta.min : null;

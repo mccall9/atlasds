@@ -34,29 +34,29 @@ function Investimentos() {
 
   const refresh = () => { qc.invalidateQueries({ queryKey: ["investimentos"] }); qc.invalidateQueries({ queryKey: ["panel"] }); };
   const add = async () => {
-    if (!f.cliente_id) return toast.error("Escolha o cliente");
+    if (!f.cliente_id) { toast.error("Escolha o cliente"); return; }
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("investimento_anuncios").insert({
       cliente_id: f.cliente_id, data: f.data, plataforma: f.plataforma,
-      valor_investido: parseNumber(f.valor) ?? 0, conversas_iniciadas: Math.round(parseNumber(f.conversas) ?? 0), created_by: u.user?.id,
+      valor_investido: parseNumber(f.valor) ?? 0, conversas_iniciadas: Math.round(parseNumber(f.conversas) ?? 0), created_by: u.user?.id ?? null,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Lançamento salvo");
     setF({ ...f, valor: "", conversas: "" });
     refresh();
   };
   const del = async (id: string) => { await supabase.from("investimento_anuncios").delete().eq("id", id); refresh(); };
   const csv = async (file: File) => {
-    if (!f.cliente_id) return toast.error("Escolha o cliente antes de importar");
+    if (!f.cliente_id) { toast.error("Escolha o cliente antes de importar"); return; }
     const lines = (await file.text()).split(/\r?\n/).filter((l) => l.trim());
-    const sep = lines[0].includes(";") ? ";" : ",";
+    const sep = (lines[0] ?? "").includes(";") ? ";" : ",";
     const rows = lines.slice(1).map((l) => l.split(sep)).map((c) => ({
       cliente_id: f.cliente_id, data: parseDate(c[0]), plataforma: c[1]?.trim().toLowerCase().startsWith("g") ? "google" : "meta",
       valor_investido: parseNumber(c[2]) ?? 0, conversas_iniciadas: Math.round(parseNumber(c[3]) ?? 0),
     })).filter((r) => r.data) as any[];
-    if (!rows.length) return toast.error("Nenhuma linha válida no CSV");
+    if (!rows.length) { toast.error("Nenhuma linha válida no CSV"); return; }
     const { error } = await supabase.from("investimento_anuncios").insert(rows);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(`${rows.length} lançamento(s) importado(s)`);
     refresh();
   };

@@ -1,7 +1,7 @@
 import { Logo } from "./AppShell";
 import { fmtDate } from "@/lib/format";
 
-export function PanelTitle({ logoUrl, subtitle, de, ate, clienteNome }: { logoUrl?: string | null; subtitle?: string; de: string; ate: string; clienteNome: string }) {
+export function PanelTitle({ logoUrl, subtitle, de, ate, clienteNome }: { logoUrl?: string | null | undefined; subtitle?: string | undefined; de: string; ate: string; clienteNome: string }) {
   return (
     <>
       <div className="print-only mb-6 border-b pb-4">
