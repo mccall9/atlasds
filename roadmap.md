@@ -1,4 +1,7 @@
 # Roadmap
+- [ ] Liberar administrador para o acesso john.cs (confirmar conta).
+- [ ] Conferir atraso dos Portais, tratar limite de leituras e atualizar painel aberto após sincronização.
+- [ ] Definir atualização instantânea com Jhonatan conforme opções disponíveis no Google Sheets.
 - [x] Schema, 11 clientes, login, conector Google Sheets
 - [x] Domínio de acesso: @assessoriaatlas.com
 - [x] Sync + cron 15 min (ativo após publicar)
