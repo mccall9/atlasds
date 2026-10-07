@@ -259,6 +259,85 @@ export type Database = {
           },
         ]
       }
+      portal_drive_watches: {
+        Row: {
+          callback_url: string
+          cliente_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          last_error: string | null
+          last_message: number
+          last_version: string | null
+          pending_at: string | null
+          resource_id: string | null
+          spreadsheet_id: string
+          token_hash: string
+        }
+        Insert: {
+          callback_url: string
+          cliente_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          last_error?: string | null
+          last_message?: number
+          last_version?: string | null
+          pending_at?: string | null
+          resource_id?: string | null
+          spreadsheet_id: string
+          token_hash: string
+        }
+        Update: {
+          callback_url?: string
+          cliente_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_error?: string | null
+          last_message?: number
+          last_version?: string | null
+          pending_at?: string | null
+          resource_id?: string | null
+          spreadsheet_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_drive_watches_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_sync_leases: {
+        Row: {
+          cliente_id: string
+          expires_at: string
+          lease_token: string
+        }
+        Insert: {
+          cliente_id: string
+          expires_at: string
+          lease_token: string
+        }
+        Update: {
+          cliente_id?: string
+          expires_at?: string
+          lease_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_sync_leases_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: true
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       regras_procedimentos: {
         Row: {
           cliente_id: string
@@ -470,6 +549,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acquire_portal_sync: {
+        Args: { _cliente_id: string; _token: string }
+        Returns: boolean
+      }
       can_view_cliente: { Args: { _cliente_id: string }; Returns: boolean }
       claim_access: { Args: never; Returns: string }
       has_role: {
@@ -480,6 +563,16 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      receive_portal_drive_event: {
+        Args: {
+          _changed: boolean
+          _hash: string
+          _id: string
+          _message: number
+          _resource: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "equipe" | "cliente"
