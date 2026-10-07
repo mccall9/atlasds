@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Corrigir avisos de indisponibilidade por limite do Google: conferir causa, reforçar recuperação e validar com dados reais.
 - [x] Orientar quais acessos Meta/BM são necessários por médico; integração direta requer configuração adicional, não solicitar senhas.
 - [x] Liberar administrador para jhon.cs@assessoriaatlas.com.
 - [x] Conferir atraso, tratar limite de leituras e verificar painel aberto atualizando automaticamente após sincronização.
