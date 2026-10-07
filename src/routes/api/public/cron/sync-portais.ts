@@ -15,6 +15,9 @@ export const Route = createFileRoute("/api/public/cron/sync-portais")({
           if (denied) return denied;
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { ensureDriveWatches, processDriveChanges } = await import("@/lib/drive-watch.server");
+        await processDriveChanges();
+        await ensureDriveWatches();
         const since = new Date(Date.now() - 10 * 60_000).toISOString();
         const { count } = await (supabaseAdmin as any).from("sync_logs").select("id", { count: "exact", head: true }).gte("inicio", since);
         if ((count ?? 0) > 0) return Response.json({ ok: true, skipped: true });

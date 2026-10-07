@@ -1,7 +1,9 @@
 # Roadmap
+- [x] Orientar quais acessos Meta/BM são necessários por médico; integração direta requer configuração adicional, não solicitar senhas.
 - [x] Liberar administrador para jhon.cs@assessoriaatlas.com.
 - [x] Conferir atraso, tratar limite de leituras e verificar painel aberto atualizando automaticamente após sincronização.
-- [ ] Implementar detecção de mudanças pelo Google Drive (opção escolhida); conectar e verificar autorização, manter cron de segurança.
+- [x] Implementar detecção pelo Google Drive, conectar e registrar avisos para os 11 Portais; manter cron de segurança.
+- [ ] Verificar edição real chegando pelo Google — bloqueado até publicar esta versão e Jhonatan editar um Portal; não alterar planilhas para teste.
 - [x] Schema, 11 clientes, login, conector Google Sheets
 - [x] Domínio de acesso: @assessoriaatlas.com
 - [x] Sync + cron 15 min (ativo após publicar)
