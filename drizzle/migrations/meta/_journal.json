@@ -43,6 +43,13 @@
       "when": 1791376311929,
       "tag": "0005_dispatch_drive_events",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791460310387,
+      "tag": "0006_hunter_scoped_access",
+      "breakpoints": true
     }
   ]
 }

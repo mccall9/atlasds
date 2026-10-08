@@ -139,6 +139,21 @@ export type Database = {
         }
         Relationships: []
       }
+      hunter_users: {
+        Row: {
+          hunter: string
+          user_id: string
+        }
+        Insert: {
+          hunter: string
+          user_id: string
+        }
+        Update: {
+          hunter?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       info_gerais: {
         Row: {
           chave: string | null
