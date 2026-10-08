@@ -1,4 +1,5 @@
 import type { Tables } from "@/integrations/supabase/types";
+import { fmtDate } from "./format";
 
 export type Venda = Tables<"vendas">;
 export type Meta = Tables<"metas">;
@@ -25,6 +26,33 @@ const sum = (rows: Venda[], f: (r: Venda) => number | null) => {
 const div = (a: number | null, b: number | null) => (a == null || !b ? null : a / b);
 export const isSold = (r: Venda) =>
   r.status !== "CIRURGIA DESMARCADA" && ((r.vendas ?? 0) >= 1 || r.status === "VENDA REALIZADA" || r.status === PAGO);
+
+export function weeklyMetrics(d: PanelData, clienteIds: string[], de: string, ate: string) {
+  const start = new Date(`${de}T00:00:00Z`);
+  const end = new Date(`${ate}T00:00:00Z`);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || start > end) return [];
+  const weeks = [];
+  let cursor = start;
+  while (cursor <= end) {
+    const last = new Date(cursor);
+    // Calendar weeks run Monday–Sunday, clipped to the selected period.
+    last.setUTCDate(last.getUTCDate() + (7 - last.getUTCDay()) % 7);
+    if (last > end) last.setTime(end.getTime());
+    const from = cursor.toISOString().slice(0, 10);
+    const to = last.toISOString().slice(0, 10);
+    const m = computeMetrics(d, clienteIds, from, to);
+    weeks.push({ de: from, ate: to, semana: `${fmtDate(from)} – ${fmtDate(to)}`,
+      Consultas: m.porConsulta.length ? m.consultas : 0,
+      Comparecimentos: m.porConsulta.length ? m.comparec : 0,
+      Vendas: m.porVenda.length ? m.vendasQtd : 0,
+      Cirurgias: m.realizados.length,
+      rows: { consultas: m.porConsulta, vendas: m.porVenda, cirurgias: m.realizados },
+    });
+    cursor = new Date(last);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return weeks;
+}
 
 function monthsIn(de: string, ate: string) {
   const out: { ano: number; mes: number }[] = [];

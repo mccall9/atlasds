@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dashboard } from "@/components/atlas/Dashboard";
 import { PanelTitle, PrintFooter } from "@/components/atlas/PanelHeader";
-import { useConfig } from "@/components/atlas/AppShell";
+import { useConfig, useRole } from "@/components/atlas/AppShell";
 import { loadPanelData } from "@/lib/panel-data";
 import { usePanelFreshness } from "@/hooks/use-panel-freshness";
 import { syncNow } from "@/lib/sync.functions";
@@ -56,6 +56,8 @@ function Painel() {
   const nav = useNavigate({ from: "/painel" });
   const qc = useQueryClient();
   const cfg = useConfig();
+  const role = useRole();
+  const canSync = role.data === "admin" || role.data === "equipe";
   const q = useQuery({ queryKey: ["panel"], queryFn: loadPanelData });
   const sync = useServerFn(syncNow);
   const mut = useMutation({
@@ -91,9 +93,9 @@ function Painel() {
         <PanelTitle logoUrl={cfg.data?.logo_url} de={range.de} ate={range.ate} clienteNome={clienteNome} lastSync={lastSync} filters={[s.hunter && `Hunter: ${s.hunter}`, s.perf && `Performance: ${s.perf}`].filter(Boolean).join(" · ")} />
         <div className="no-print flex items-center gap-2">
           <span className="text-xs text-muted-foreground">Última atualização: {fmtDateTime(lastSync)}<br />Atualização automática: a cada 15 minutos</span>
-          <Button variant="outline" size="sm" onClick={() => mut.mutate()} disabled={mut.isPending}>
+          {canSync && <Button variant="outline" size="sm" onClick={() => mut.mutate()} disabled={mut.isPending}>
             <RefreshCw className={mut.isPending ? "size-4 animate-spin" : "size-4"} />{mut.isPending ? "Atualizando…" : "Atualizar agora"}
-          </Button>
+          </Button>}
           <Button size="sm" disabled={!data || q.isError || mut.isPending} onClick={() => void printPanel(clienteNome, range.de, range.ate)}><FileDown className="size-4" />Exportar PDF</Button>
         </div>
       </div>
@@ -145,7 +147,7 @@ function Painel() {
       ) : data && data.vendas.length === 0 ? (
         <div className="rounded-2xl border bg-card p-10 text-center">
           <p className="text-sm text-muted-foreground">Ainda não há dados sincronizados dos Portais.</p>
-          <Button className="mt-4" onClick={() => mut.mutate()} disabled={mut.isPending}>Sincronizar agora</Button>
+          {canSync && <Button className="mt-4" onClick={() => mut.mutate()} disabled={mut.isPending}>Sincronizar agora</Button>}
         </div>
       ) : data ? (
         <Dashboard data={data} clienteIds={clienteIds} de={range.de} ate={range.ate} carteira={carteira} onSelectCliente={(id) => set({ cliente: id })} />
