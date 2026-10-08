@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Incluir na tabela de leads consultas, vendas e procedimentos do período, mesmo com consulta anterior; validar com Victor Hugo.
 - [ ] Alterar a atualização automática para somente a cada 15 minutos, desativando leituras por avisos do Drive e conferindo o agendamento.
 - [ ] Melhorar PDF A4 com cabeçalho, filtros, tabelas completas e quebras de página; validar visualmente com dados reais.
 - [ ] Corrigir avisos de indisponibilidade por limite do Google: conferir causa, reforçar recuperação e validar com dados reais.
