@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { computeMetrics, type PanelData, type Venda } from "@/lib/metrics";
+import { computeMetrics, weeklyMetrics, type PanelData, type Venda } from "@/lib/metrics";
 import { MES_LONGO, csvDownload, fmtBRL, fmtDate, fmtInt, fmtPct } from "@/lib/format";
 import { STATUSES } from "@/lib/parse";
 import { cn } from "@/lib/utils";
@@ -151,7 +151,7 @@ export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente
 
       <LeadsTable leads={m.leads} nomeCliente={nomeCliente} />
 
-      <Evolucao data={data} clienteIds={clienteIds} m={m} />
+      <Evolucao data={data} clienteIds={clienteIds} de={de} ate={ate} m={m} />
 
       {carteira && <Carteira data={data} clienteIds={clienteIds} de={de} ate={ate} onSelect={onSelectCliente} />}
 
@@ -270,23 +270,14 @@ function LeadsTable({ leads, nomeCliente }: { leads: Venda[]; nomeCliente: (id: 
   );
 }
 
-function Evolucao({ data, clienteIds, m }: { data: PanelData; clienteIds: string[]; m: ReturnType<typeof computeMetrics> }) {
+function Evolucao({ data, clienteIds, de, ate, m }: { data: PanelData; clienteIds: string[]; de: string; ate: string; m: ReturnType<typeof computeMetrics> }) {
   const caixa = m.caixa ?? 0;
   const metas = [
     { k: "Meta Mínima", v: m.meta.min },
     { k: "Meta Ideal", v: m.meta.ideal },
     { k: "Supermeta", v: m.meta.sup },
   ];
-  const semanal = useMemo(() => {
-    const byLabel = new Map<string, { semana: string; Consultas: number; Comparecimentos: number; Vendas: number; Cirurgias: number; ordem: number }>();
-    data.acompanhamento.filter((a) => clienteIds.includes(a.cliente_id)).forEach((a) => {
-      const k = a.semana_label ?? "";
-      const e = byLabel.get(k) ?? { semana: k, Consultas: 0, Comparecimentos: 0, Vendas: 0, Cirurgias: 0, ordem: a.ordem };
-      e.Consultas += a.consultas_agendadas ?? 0; e.Comparecimentos += a.comparecimentos ?? 0; e.Vendas += a.vendas ?? 0; e.Cirurgias += a.cirurgias ?? 0;
-      byLabel.set(k, e);
-    });
-    return [...byLabel.values()].sort((a, b) => a.ordem - b.ordem);
-  }, [data.acompanhamento, clienteIds]);
+  const semanal = useMemo(() => weeklyMetrics(data, clienteIds, de, ate), [data, clienteIds, de, ate]);
   const funil = [
     { k: "Consultas", v: m.consultas ?? 0 },
     { k: "Comparecimentos", v: m.comparec ?? 0 },
@@ -318,16 +309,16 @@ function Evolucao({ data, clienteIds, m }: { data: PanelData; clienteIds: string
         </div>
         <div className="rounded-2xl border bg-card p-5">
           <div className="mb-3 text-sm font-semibold">Acompanhamento semanal</div>
-          {semanal.length === 0 ? (
-            <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">Sem dados semanais sincronizados.</div>
+          {semanal.length === 0 || m.leads.length === 0 ? (
+            <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">Sem registros no período selecionado.</div>
           ) : (
             <div className="h-72">
               <ResponsiveContainer>
                 <LineChart data={semanal}>
                   <CartesianGrid stroke="var(--border)" />
-                  <XAxis dataKey="semana" fontSize={10} stroke="var(--muted-foreground)" />
-                  <YAxis fontSize={11} stroke="var(--muted-foreground)" />
-                  <Tooltip /><Legend />
+                  <XAxis dataKey="semana" fontSize={10} minTickGap={24} stroke="var(--muted-foreground)" />
+                  <YAxis allowDecimals={false} fontSize={11} stroke="var(--muted-foreground)" />
+                  <Tooltip formatter={(value) => fmtInt(typeof value === "number" ? value : null)} /><Legend />
                   <Line dataKey="Consultas" stroke="var(--chart-1)" strokeWidth={2} />
                   <Line dataKey="Comparecimentos" stroke="var(--chart-2)" strokeWidth={2} />
                   <Line dataKey="Vendas" stroke="var(--chart-4)" strokeWidth={2} />

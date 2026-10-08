@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,16 +24,29 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const nav = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setMode("reset");
+    });
+    if (window.location.hash.includes("type=recovery")) setMode("reset");
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
-      if (mode === "login") {
+      if (mode === "reset") {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+        toast.success("Senha definida com sucesso.");
+        nav({ to: "/painel" });
+      } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         nav({ to: "/painel" });
@@ -61,18 +74,18 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm rounded-2xl border bg-card p-8 shadow-sm">
         <Logo />
-        <h1 className="mt-6 text-xl font-semibold">Painel de Resultados</h1>
+        <h1 className="mt-6 text-xl font-semibold">{mode === "reset" ? "Definir sua senha" : "Painel de Resultados"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Acesso restrito à equipe Atlas (@assessoriaatlas.com).</p>
-        <Button variant="outline" className="mt-6 w-full" onClick={google}>Continuar com Google</Button>
-        <div className="my-5 text-center text-xs text-muted-foreground">ou</div>
+        {mode !== "reset" && <><Button variant="outline" className="mt-6 w-full" onClick={google}>Continuar com Google</Button>
+        <div className="my-5 text-center text-xs text-muted-foreground">ou</div></>}
         <form onSubmit={submit} className="space-y-3">
-          <div className="space-y-1.5"><Label>E-mail</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-          <div className="space-y-1.5"><Label>Senha</Label><Input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-          <Button className="w-full" disabled={busy}>{mode === "login" ? "Entrar" : "Criar conta"}</Button>
+          {mode !== "reset" && <div className="space-y-1.5"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>}
+          <div className="space-y-1.5"><Label htmlFor="password">{mode === "reset" ? "Nova senha" : "Senha"}</Label><Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+          <Button className="w-full" disabled={busy}>{mode === "reset" ? "Salvar senha" : mode === "login" ? "Entrar" : "Criar conta"}</Button>
         </form>
-        <button className="mt-4 w-full text-center text-xs text-muted-foreground hover:text-foreground" onClick={() => setMode(mode === "login" ? "signup" : "login")}>
+        {mode !== "reset" && <Button variant="link" className="mt-4 w-full text-xs" onClick={() => setMode(mode === "login" ? "signup" : "login")}>
           {mode === "login" ? "Primeiro acesso? Criar conta" : "Já tenho conta"}
-        </button>
+        </Button>}
       </div>
     </div>
   );

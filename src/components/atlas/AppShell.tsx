@@ -46,9 +46,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const nav = useNavigate();
   const qc = useQueryClient();
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await qc.cancelQueries();
     qc.clear();
-    nav({ to: "/auth" });
+    await supabase.auth.signOut();
+    nav({ to: "/auth", replace: true });
   };
 
   if (role.isLoading) return <div className="mx-auto max-w-7xl p-8"><Skeleton className="h-10 w-64" /></div>;

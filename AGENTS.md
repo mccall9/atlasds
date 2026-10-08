@@ -19,6 +19,7 @@
 - Sheet columns/tabs are matched by normalized header/title (trim, lowercase, no accents), never by position. Why: headers vary across Portais.
 - Metrics are computed client-side in src/lib/metrics.ts from mirrored rows so every card can list its source rows (audit). Why: auditability requirement.
 - Lead-table period selection is computed separately from consultation metrics and shared by both panels, CSV and print. Why: show sales and procedures from earlier consultations without changing date-specific metric totals.
-- Access: claim_access() RPC assigns roles by allowed email domain in configuracoes; first matching user becomes admin. Why: domain-restricted team access without hand-managed invites.
+- Access: claim_access() requires a verified allowed-domain email for new team grants; reserved hunter logins receive only the scoped reader role. Hunter assignments live in protected hunter_users and can_view_cliente matches the current doctor cadastro. Why: prevent domain and hunter privilege escalation and keep doctor reassignment effective immediately.
+- Weekly follow-up uses mirrored vendas grouped into Monday–Sunday weeks clipped to the selected period, applying each metric's date and status rules. Why: undated legacy ACOMPANHAMENTO labels cannot reliably identify the requested month.
 - Scheduled sync hits /api/public/cron/sync-portais and throttles recent reads; manual updates remain authenticated. Why: limit read-only endpoint replay and provider quotas.
 - Both panels export through the shared print helper and semantic A4 print styles, with all filtered leads instead of the visible page. Why: keep reports complete, vector-based and consistent with displayed metrics.

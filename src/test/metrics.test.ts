@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeMetrics, type PanelData, type Venda } from "@/lib/metrics";
+import { computeMetrics, weeklyMetrics, type PanelData, type Venda } from "@/lib/metrics";
 
 function row(id: string, patch: Partial<Venda> = {}): Venda {
   return {
@@ -47,5 +47,43 @@ describe("Lead table period selection", () => {
       row("sem-venda", { data_venda: "2026-10-08" }),
       row("vazio", { data_consulta: null }),
     ]).leads).toEqual([]);
+  });
+});
+
+describe("Weekly follow-up", () => {
+  const data = (vendas: Venda[]): PanelData => ({ clientes: [], vendas, metas: [], acompanhamento: [], investimentos: [], config: null });
+  it("uses October calendar weeks, clipped to the selected period", () => {
+    const weeks = weeklyMetrics(data([]), ["victor"], "2026-10-01", "2026-10-31");
+    expect(weeks.map(w => [w.de, w.ate])).toEqual([
+      ["2026-10-01", "2026-10-04"], ["2026-10-05", "2026-10-11"],
+      ["2026-10-12", "2026-10-18"], ["2026-10-19", "2026-10-25"], ["2026-10-26", "2026-10-31"],
+    ]);
+  });
+  it("counts consultations and attendance by consultation date", () => {
+    const weeks = weeklyMetrics(data([row("c", { data_consulta: "2026-10-03", consultas: 2, comparecimentos: 1 })]), ["victor"], "2026-10-01", "2026-10-31");
+    expect(weeks[0]?.Consultas).toBe(2);
+    expect(weeks[0]?.Comparecimentos).toBe(1);
+  });
+  it("counts sales by sale date even with September consultation", () => {
+    const weeks = weeklyMetrics(data([row("s", { status: "VENDA REALIZADA", data_venda: "2026-10-08", vendas: 1 })]), ["victor"], "2026-10-01", "2026-10-31");
+    expect(weeks[1]?.Vendas).toBe(1);
+    expect(weeks[1]?.Consultas).toBe(0);
+  });
+  it("counts only paid procedures by procedure date", () => {
+    const weeks = weeklyMetrics(data([
+      row("paid", { status: "PROCEDIMENTO REALIZADO | PAGO", data_cirurgia: "2026-10-14" }),
+      row("future", { status: "VENDA REALIZADA", data_cirurgia: "2026-10-14" }),
+    ]), ["victor"], "2026-10-01", "2026-10-31");
+    expect(weeks[2]?.Cirurgias).toBe(1);
+  });
+  it("excludes other doctors and dates outside the selected range", () => {
+    const weeks = weeklyMetrics(data([
+      row("other", { cliente_id: "eriel", data_consulta: "2026-10-08" }),
+      row("old", { data_consulta: "2026-06-08" }),
+    ]), ["victor"], "2026-10-01", "2026-10-31");
+    expect(weeks.reduce((total, w) => total + (w.Consultas ?? 0), 0)).toBe(0);
+  });
+  it("keeps missing source values null instead of inventing zero", () => {
+    expect(weeklyMetrics(data([row("missing", { data_consulta: "2026-10-03", consultas: null })]), ["victor"], "2026-10-01", "2026-10-04")[0]?.Consultas).toBeNull();
   });
 });

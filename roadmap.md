@@ -1,4 +1,6 @@
 # Roadmap
+- [ ] Corrigir acompanhamento semanal para o período e cliente filtrados, com testes e dados reais.
+- [ ] Criar contas Júlia, Daisa, Fabi e Pamela no padrão nome@assessoriaatlas.com, somente leitura dos respectivos doutores; validar isolamento.
 - [x] Incluir na tabela de leads consultas, vendas e procedimentos do período, mesmo com consulta anterior; validado com Victor Hugo e testes de regras.
 - [ ] Alterar a atualização automática para somente a cada 15 minutos, desativando leituras por avisos do Drive e conferindo o agendamento.
 - [ ] Melhorar PDF A4 com cabeçalho, filtros, tabelas completas e quebras de página; validar visualmente com dados reais.
