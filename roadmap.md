@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Adicionar coluna Orçamento à tabela, CSV e PDF e executar leitura manual dos Portais; dispensar conferências anteriores conforme pedido.
 - [ ] Corrigir acompanhamento semanal para o período e cliente filtrados, com testes e dados reais.
 - [ ] Criar contas Júlia, Daisa, Fabi e Pamela no padrão nome@assessoriaatlas.com, somente leitura dos respectivos doutores; validar isolamento.
 - [x] Incluir na tabela de leads consultas, vendas e procedimentos do período, mesmo com consulta anterior; validado com Victor Hugo e testes de regras.
