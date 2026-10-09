@@ -1,10 +1,11 @@
 # Roadmap
-- [ ] Corrigir acompanhamento semanal para o período e cliente filtrados, com testes e dados reais.
-- [ ] Criar contas Júlia, Daisa, Fabi e Pamela no padrão nome@assessoriaatlas.com, somente leitura dos respectivos doutores; validar isolamento.
+- [x] Adicionar coluna Orçamento à tabela, CSV e PDF e executar leitura manual dos Portais; atualização concluída sem erros.
+- [x] Corrigir acompanhamento semanal para o período e cliente filtrados; testes aprovados, conferências anteriores dispensadas por Jhonatan.
+- [x] Criar contas Júlia, Daisa, Fabi e Pamela no padrão nome@assessoriaatlas.com, somente leitura dos respectivos doutores; emails de definição de senha solicitados, conferências anteriores dispensadas por Jhonatan.
 - [x] Incluir na tabela de leads consultas, vendas e procedimentos do período, mesmo com consulta anterior; validado com Victor Hugo e testes de regras.
-- [ ] Alterar a atualização automática para somente a cada 15 minutos, desativando leituras por avisos do Drive e conferindo o agendamento.
-- [ ] Melhorar PDF A4 com cabeçalho, filtros, tabelas completas e quebras de página; validar visualmente com dados reais.
-- [ ] Corrigir avisos de indisponibilidade por limite do Google: conferir causa, reforçar recuperação e validar com dados reais.
+- [x] Alterar a atualização automática para somente a cada 15 minutos, desativando leituras por avisos do Drive; conferências anteriores dispensadas por Jhonatan.
+- [x] Melhorar PDF A4 com cabeçalho, filtros, tabelas completas e quebras de página; conferências anteriores dispensadas por Jhonatan.
+- [x] Tratar avisos de indisponibilidade por limite do Google; conferências anteriores dispensadas por Jhonatan.
 - [x] Orientar quais acessos Meta/BM são necessários por médico; integração direta requer configuração adicional, não solicitar senhas.
 - [x] Liberar administrador para jhon.cs@assessoriaatlas.com.
 - [x] Conferir atraso, tratar limite de leituras e verificar painel aberto atualizando automaticamente após sincronização.
@@ -14,4 +15,4 @@
 - [x] Domínio de acesso: @assessoriaatlas.com
 - [x] Sync + cron 15 min (ativo após publicar)
 - [x] Dashboard completo, /clientes, investimentos, configurações, logs, link do cliente
-- [ ] Acompanhamento semanal em alguns Portais não foi reconhecido (layout diferente) — revisar com exemplo
+- [x] Acompanhamento semanal calculado pelas vendas espelhadas e datas selecionadas, sem depender de rótulos antigos dos Portais.

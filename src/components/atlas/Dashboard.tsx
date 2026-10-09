@@ -175,11 +175,11 @@ function RowsTable({ rows, nomeCliente, withLine }: { rows: Venda[]; nomeCliente
           {withLine && <TableHead>Linha</TableHead>}
           <TableHead>Nome do Lead</TableHead><TableHead>Doutor</TableHead><TableHead>Data da Consulta</TableHead>
           <TableHead>Data da Venda</TableHead><TableHead>Data da Cirurgia</TableHead><TableHead>Procedimento</TableHead>
-          <TableHead className="text-right">Valor Fechado</TableHead>{withLine && <TableHead className="text-right">Caixa</TableHead>}<TableHead>Status</TableHead>
+          <TableHead className="text-right">Orçamento</TableHead><TableHead className="text-right">Valor Fechado</TableHead>{withLine && <TableHead className="text-right">Caixa</TableHead>}<TableHead>Status</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.length === 0 && <TableRow><TableCell colSpan={10} className="py-10 text-center text-muted-foreground">Nenhum registro.</TableCell></TableRow>}
+        {rows.length === 0 && <TableRow><TableCell colSpan={withLine ? 11 : 9} className="py-10 text-center text-muted-foreground">Nenhum registro.</TableCell></TableRow>}
         {rows.map((r) => (
           <TableRow key={r.id}>
             {withLine && <TableCell className="text-muted-foreground">{r.linha_planilha}</TableCell>}
@@ -189,6 +189,7 @@ function RowsTable({ rows, nomeCliente, withLine }: { rows: Venda[]; nomeCliente
             <TableCell>{fmtDate(r.data_venda)}</TableCell>
             <TableCell>{fmtDate(r.data_cirurgia)}</TableCell>
             <TableCell className="max-w-48 truncate">{r.procedimento ?? "—"}</TableCell>
+            <TableCell className="text-right tabular-nums">{fmtBRL(r.orcamento)}</TableCell>
             <TableCell className="text-right tabular-nums">{fmtBRL(r.valor_fechado)}</TableCell>
             {withLine && <TableCell className="text-right tabular-nums">{fmtBRL(r.caixa_recebido)}</TableCell>}
             <TableCell><StatusBadge s={r.status} /></TableCell>
@@ -235,8 +236,8 @@ function LeadsTable({ leads, nomeCliente }: { leads: Venda[]; nomeCliente: (id: 
   const rows = filtered.slice(page * per, page * per + per);
   const exportCsv = () =>
     csvDownload("leads.csv", [
-      ["Nome do Lead", "Doutor", "Data da Consulta", "Data da Venda", "Data da Cirurgia", "Procedimento", "Valor Fechado", "Status"],
-      ...filtered.map((r) => [r.lead_nome, nomeCliente(r.cliente_id), fmtDate(r.data_consulta), fmtDate(r.data_venda), fmtDate(r.data_cirurgia), r.procedimento, r.valor_fechado, r.status]),
+      ["Nome do Lead", "Doutor", "Data da Consulta", "Data da Venda", "Data da Cirurgia", "Procedimento", "Orçamento", "Valor Fechado", "Status"],
+      ...filtered.map((r) => [r.lead_nome, nomeCliente(r.cliente_id), fmtDate(r.data_consulta), fmtDate(r.data_venda), fmtDate(r.data_cirurgia), r.procedimento, r.orcamento, r.valor_fechado, r.status]),
     ]);
   return (
     <Section className="report-leads" title={`Leads no período · ${filtered.length} lead${filtered.length === 1 ? "" : "s"}`}>
