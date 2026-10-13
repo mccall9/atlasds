@@ -105,10 +105,11 @@ export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente
       </Section>
 
       <Section title="Consultas" tone="orange">
-        <div className={grid3}>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card tone="orange" icon={CalendarCheck} label="Consultas Agendadas" value={fmtInt(m.consultas)} onClick={open("Consultas no período", m.porConsulta)} />
           <Card tone="orange" icon={Users} label="Comparecimentos" value={fmtInt(m.comparec)} onClick={open("Comparecimentos", m.porConsulta.filter((r) => (r.comparecimentos ?? 0) > 0))} />
           <Card tone="orange" icon={Percent} label="Taxa de Comparecimento" value={fmtPct(m.taxaComp)} hint="Comparecimentos ÷ Consultas" />
+          <Card tone="orange" icon={Receipt} label="Orçamentos" value={fmtBRL(m.orcamentos)} hint="Total dos leads no período" onClick={open("Orçamentos no período", m.orcamentoRows)} />
         </div>
       </Section>
 

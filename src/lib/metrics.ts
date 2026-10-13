@@ -92,6 +92,8 @@ export function computeMetrics(d: PanelData, clienteIds: string[], de: string, a
     || inR(r.data_cirurgia, de, ate),
   ).sort((a, b) => (b.data_consulta ?? "").localeCompare(a.data_consulta ?? ""));
   const realizados = v.filter((r) => inR(r.data_cirurgia, de, ate) && r.status === PAGO);
+  const orcamentoRows = leads.filter((r) => r.orcamento != null);
+  const orcamentos = sum(orcamentoRows, (r) => r.orcamento);
   const projetados = v.filter((r) => inR(r.data_cirurgia, de, ate) && isSold(r));
   const futuros = v.filter((r) => !!r.data_cirurgia && r.data_cirurgia > ate && isSold(r));
 
@@ -140,7 +142,7 @@ export function computeMetrics(d: PanelData, clienteIds: string[], de: string, a
     projetados, fatPrev, ticketPrev: div(fatPrev, projetados.length), meta, pctMeta: div(fatPrev, meta.min),
     futuros, fatFut, ticketFut: div(fatFut, futuros.length), pipeline,
     origens: [...origemMap.entries()].map(([origem, x]) => ({ origem, ...x })),
-    leads,
+    leads, orcamentoRows, orcamentos,
   };
 }
 export type Metrics = ReturnType<typeof computeMetrics>;

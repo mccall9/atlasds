@@ -87,3 +87,21 @@ describe("Weekly follow-up", () => {
     expect(weeklyMetrics(data([row("missing", { data_consulta: "2026-10-03", consultas: null })]), ["victor"], "2026-10-01", "2026-10-04")[0]?.Consultas).toBeNull();
   });
 });
+
+describe("Budget card", () => {
+  it("sums the Portal budget values, not closed values, for the filtered lead rows once", () => {
+    const m = metrics([
+      row("consulta", { data_consulta: "2026-10-05", orcamento: 15500, valor_fechado: 12000 }),
+      row("venda", { status: "VENDA REALIZADA", data_venda: "2026-10-08", data_cirurgia: "2026-10-14", orcamento: 20000 }),
+      row("outro-cliente", { cliente_id: "eriel", data_consulta: "2026-10-05", orcamento: 999 }),
+      row("fora", { orcamento: 999 }),
+      row("sem-orcamento", { data_consulta: "2026-10-05" }),
+    ]);
+    expect(m.orcamentos).toBe(35500);
+    expect(m.orcamentoRows.map(r => r.id).sort()).toEqual(["consulta", "venda"]);
+  });
+  it("preserves absent budgets as null and a recorded zero as zero", () => {
+    expect(metrics([row("vazio", { data_consulta: "2026-10-05" })]).orcamentos).toBeNull();
+    expect(metrics([row("zero", { data_consulta: "2026-10-05", orcamento: 0 })]).orcamentos).toBe(0);
+  });
+});
