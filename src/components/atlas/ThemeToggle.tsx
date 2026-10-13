@@ -14,6 +14,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const enabled = saved === "dark";
       setDark(enabled);
       document.documentElement.classList.toggle("dark", enabled);
+      document.body.classList.toggle("dark", enabled);
     } catch {
       // Storage may be blocked; the switch still works for this visit.
     }
@@ -23,6 +24,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const enabled = !dark;
     setDark(enabled);
     document.documentElement.classList.toggle("dark", enabled);
+    document.body.classList.toggle("dark", enabled);
     try {
       localStorage.setItem(storageKey, enabled ? "dark" : "light");
     } catch {

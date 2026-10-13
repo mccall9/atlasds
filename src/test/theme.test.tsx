@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { ThemeProvider, ThemeToggle } from "@/components/atlas/ThemeToggle";
 
@@ -6,6 +6,7 @@ afterEach(() => {
   cleanup();
   localStorage.clear();
   document.documentElement.classList.remove("dark");
+  document.body.classList.remove("dark");
 });
 
 describe("theme preference", () => {
