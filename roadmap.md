@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Ocultar selo Lovable, substituir favicon por A da Atlas e adicionar card de Orçamentos com auditoria.
 - [x] Adicionar coluna Orçamento à tabela, CSV e PDF e executar leitura manual dos Portais; atualização concluída sem erros.
 - [x] Corrigir acompanhamento semanal para o período e cliente filtrados; testes aprovados, conferências anteriores dispensadas por Jhonatan.
 - [x] Criar contas Júlia, Daisa, Fabi e Pamela no padrão nome@assessoriaatlas.com, somente leitura dos respectivos doutores; emails de definição de senha solicitados, conferências anteriores dispensadas por Jhonatan.
