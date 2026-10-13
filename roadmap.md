@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Adicionar botão de tema claro/escuro com escolha salva e impressão clara.
 - [x] Ocultar selo Lovable, substituir favicon por A da Atlas e adicionar card de Orçamentos com auditoria; cálculo e painel conferidos.
 - [x] Adicionar coluna Orçamento à tabela, CSV e PDF e executar leitura manual dos Portais; atualização concluída sem erros.
 - [x] Corrigir acompanhamento semanal para o período e cliente filtrados; testes aprovados, conferências anteriores dispensadas por Jhonatan.
