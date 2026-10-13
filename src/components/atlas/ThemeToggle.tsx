@@ -20,6 +20,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+    document.body.classList.toggle("dark", dark);
+  }, [dark]);
+
   const toggle = () => {
     const enabled = !dark;
     setDark(enabled);
