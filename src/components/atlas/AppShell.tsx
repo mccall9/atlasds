@@ -5,6 +5,7 @@ import { LogOut, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function useRole() {
   return useQuery({
@@ -88,6 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
+          <ThemeToggle />
           <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="size-4" />Sair</Button>
         </div>
       </header>

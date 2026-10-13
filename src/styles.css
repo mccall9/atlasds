@@ -2,7 +2,7 @@
 @source "../src";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 /*
  * Design system definition.
@@ -118,6 +118,44 @@
   --g-darkgreen: oklch(0.42 0.1 155); --g-darkgreen-soft: oklch(0.92 0.05 155);
 }
 
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.19 0.009 220);
+  --foreground: oklch(0.94 0.008 220);
+  --card: oklch(0.24 0.012 220);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.26 0.012 220);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.75 0.1 190);
+  --primary-foreground: oklch(0.2 0.025 205);
+  --secondary: oklch(0.31 0.022 200);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.29 0.01 220);
+  --muted-foreground: oklch(0.74 0.012 220);
+  --accent: oklch(0.34 0.025 200);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.72 0.17 25);
+  --destructive-foreground: oklch(0.19 0.009 220);
+  --border: oklch(0.36 0.014 220);
+  --input: oklch(0.39 0.014 220);
+  --ring: oklch(0.75 0.1 190);
+  --chart-1: oklch(0.75 0.1 190);
+  --chart-2: oklch(0.7 0.1 170);
+  --chart-3: oklch(0.8 0.09 180);
+  --chart-4: oklch(0.78 0.14 60);
+  --chart-5: oklch(0.76 0.15 350);
+  --g-blue: oklch(0.76 0.12 255); --g-blue-soft: oklch(0.31 0.05 255);
+  --g-green: oklch(0.76 0.13 150); --g-green-soft: oklch(0.31 0.045 150);
+  --g-orange: oklch(0.8 0.13 55); --g-orange-soft: oklch(0.33 0.045 60);
+  --g-pink: oklch(0.77 0.14 355); --g-pink-soft: oklch(0.32 0.045 355);
+  --g-teal: oklch(0.77 0.1 190); --g-teal-soft: oklch(0.31 0.04 190);
+  --g-purple: oklch(0.77 0.13 295); --g-purple-soft: oklch(0.32 0.045 295);
+  --g-yellow: oklch(0.83 0.13 85); --g-yellow-soft: oklch(0.34 0.05 90);
+  --g-gray: oklch(0.75 0.01 250); --g-gray-soft: oklch(0.32 0.008 250);
+  --g-red: oklch(0.75 0.16 25); --g-red-soft: oklch(0.32 0.045 25);
+  --g-darkgreen: oklch(0.73 0.1 155); --g-darkgreen-soft: oklch(0.29 0.04 155);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -129,8 +167,52 @@
   }
 }
 
+/* Recharts supplies light inline defaults; use the active semantic palette. */
+.recharts-default-tooltip {
+  background-color: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+  border-color: var(--border) !important;
+  border-radius: var(--radius-sm);
+}
+.recharts-tooltip-label { color: var(--popover-foreground); }
+.recharts-tooltip-cursor { fill: var(--muted); }
+.recharts-dot { fill: var(--card); }
+.dark input[type="date"] { color-scheme: dark; }
+
+.dark {
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
 .print-only { display: none; }
 @media print {
+  :root, .dark {
+    color-scheme: light;
+    --background: oklch(1 0 0);
+    --card: oklch(1 0 0);
+    --foreground: oklch(0.24 0.03 230);
+    --card-foreground: var(--foreground);
+    --muted-foreground: oklch(0.45 0.02 230);
+    --border: oklch(0.85 0.008 95);
+    --primary: oklch(0.45 0.08 205);
+    --primary-foreground: oklch(0.99 0 0);
+    --g-blue: oklch(0.55 0.15 255); --g-blue-soft: oklch(0.95 0.03 255);
+    --g-green: oklch(0.55 0.13 150); --g-green-soft: oklch(0.95 0.04 150);
+    --g-orange: oklch(0.65 0.15 55); --g-orange-soft: oklch(0.96 0.04 60);
+    --g-pink: oklch(0.6 0.17 355); --g-pink-soft: oklch(0.96 0.03 355);
+    --g-teal: oklch(0.58 0.1 190); --g-teal-soft: oklch(0.95 0.035 190);
+    --g-purple: oklch(0.52 0.16 295); --g-purple-soft: oklch(0.955 0.03 295);
+    --g-yellow: oklch(0.72 0.14 85); --g-yellow-soft: oklch(0.96 0.05 90);
+    --g-gray: oklch(0.55 0.01 250); --g-gray-soft: oklch(0.95 0.004 250);
+    --g-red: oklch(0.58 0.2 25); --g-red-soft: oklch(0.95 0.035 25);
+    --g-darkgreen: oklch(0.42 0.1 155); --g-darkgreen-soft: oklch(0.92 0.05 155);
+  }
   @page { size: A4 portrait; margin: 12mm 10mm 14mm; }
   .no-print { display: none !important; }
   .print-only { display: block !important; }

@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Atlas Painel
+- Theme state is shared through a root provider, restored after hydration and persisted locally; print tokens always use light colors. Why: keep navigation consistent without SSR mismatches or dark reports.
 - Automatic Portal reads run only through the scheduled sync; old Drive notifications are acknowledged without dispatch and watch activation is disabled. Why: avoid overlapping automatic reads and quota bursts.
 - All mirror sync entry points acquire a per-client database lease. Why: notifications, manual actions and safety cron must not replace the same rows concurrently.
 - Open dashboards check mirrored sync status every 30 seconds (shared panels every 60 seconds), never polling Sheets directly. Why: reflect completed syncs without consuming Google quotas.

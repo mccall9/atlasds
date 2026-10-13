@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Revisar tokens de cores, textos, ícones e gráficos de todas as telas; aparência conferida no login, telas protegidas sem sessão disponível.
+- [x] Adicionar botão de tema claro/escuro com escolha salva e impressão clara; teste de persistência aprovado.
 - [x] Ocultar selo Lovable, substituir favicon por A da Atlas e adicionar card de Orçamentos com auditoria; cálculo e painel conferidos.
 - [x] Adicionar coluna Orçamento à tabela, CSV e PDF e executar leitura manual dos Portais; atualização concluída sem erros.
 - [x] Corrigir acompanhamento semanal para o período e cliente filtrados; testes aprovados, conferências anteriores dispensadas por Jhonatan.

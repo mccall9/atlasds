@@ -11,6 +11,7 @@ import { getSharedPanel } from "@/lib/sync.functions";
 import { fmtDate, fmtDateTime, presetRange, type Preset } from "@/lib/format";
 import type { PanelData } from "@/lib/metrics";
 import { printPanel } from "@/lib/print-panel";
+import { ThemeToggle } from "@/components/atlas/ThemeToggle";
 
 export const Route = createFileRoute("/c/$token")({
   head: () => ({
@@ -42,7 +43,8 @@ function SharedPanel() {
     <main className="panel-report mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
       <div className="report-title flex flex-wrap items-end justify-between gap-4">
         <PanelTitle de={range.de} ate={range.ate} clienteNome={c.nome} lastSync={c.last_sync_at} subtitle={`${c.nome} · Última atualização: ${fmtDateTime(c.last_sync_at)}`} />
-        <div className="no-print flex items-center gap-2">
+        <div className="no-print flex flex-wrap items-center gap-2">
+          <ThemeToggle />
           <Select value={preset} onValueChange={(v) => setPreset(v as typeof preset)}>
             <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
