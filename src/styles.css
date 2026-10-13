@@ -167,6 +167,29 @@
   }
 }
 
+/* Recharts supplies light inline defaults; use the active semantic palette. */
+.recharts-default-tooltip {
+  background-color: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+  border-color: var(--border) !important;
+  border-radius: var(--radius-sm);
+}
+.recharts-tooltip-label { color: var(--popover-foreground); }
+.recharts-tooltip-cursor { fill: var(--muted); }
+.recharts-dot { fill: var(--card); }
+.dark input[type="date"] { color-scheme: dark; }
+
+.dark {
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
 .print-only { display: none; }
 @media print {
   :root, .dark {

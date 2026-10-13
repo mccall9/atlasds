@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/atlas/AppShell";
+import { ThemeToggle } from "@/components/atlas/ThemeToggle";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -73,7 +74,7 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm rounded-2xl border bg-card p-8 shadow-sm">
-        <Logo />
+        <div className="flex items-center justify-between gap-3"><Logo /><ThemeToggle /></div>
         <h1 className="mt-6 text-xl font-semibold">{mode === "reset" ? "Definir sua senha" : "Painel de Resultados"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Acesso restrito à equipe Atlas (@assessoriaatlas.com).</p>
         {mode !== "reset" && <><Button variant="outline" className="mt-6 w-full" onClick={google}>Continuar com Google</Button>
