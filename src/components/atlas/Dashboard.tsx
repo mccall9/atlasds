@@ -122,9 +122,10 @@ export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente
       </Section>
 
       <Section title="Procedimentos projetados" tone="teal">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <Card tone="teal" icon={CalendarClock} label="Procedimentos Previstos" value={fmtInt(m.projetados.length)} onClick={open("Procedimentos previstos no período", m.projetados)} />
           <Card tone="teal" icon={TrendingUp} label="Faturamento Previsto" value={fmtBRL(m.fatPrev)} onClick={open("Faturamento previsto", m.projetados)} />
+          <Card tone="teal" icon={Percent} label="Comissão Prevista" value={fmtBRL(m.comPrev)} hint={`${fmtPct(m.cfg.pct_total / 100)} do faturamento previsto`} onClick={open("Comissão prevista", m.projetados)} />
           <Card tone="teal" icon={Receipt} label="Ticket Médio" value={fmtBRL(m.ticketPrev)} />
           <Card tone="teal" icon={Target} label="Meta Esperada" value={fmtBRL(m.meta.min)} hint={m.pctMeta == null ? "Sem meta cadastrada" : `${fmtPct(m.pctMeta)} atingido`} />
         </div>

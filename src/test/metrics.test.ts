@@ -88,6 +88,29 @@ describe("Weekly follow-up", () => {
   });
 });
 
+describe("Projected commission", () => {
+  it("applies the total rate to projected revenue without requiring full payment", () => {
+    const m = metrics([
+      row("previsto", { status: "VENDA REALIZADA", data_cirurgia: "2026-10-20", valor_fechado: 20000, pago_100: false }),
+      row("pago", { status: "PROCEDIMENTO REALIZADO | PAGO", data_cirurgia: "2026-10-10", valor_fechado: 10000, caixa_recebido: 10000 }),
+      row("cancelado", { status: "CIRURGIA DESMARCADA", vendas: 1, data_cirurgia: "2026-10-20", valor_fechado: 50000 }),
+      row("futuro", { status: "VENDA REALIZADA", data_cirurgia: "2026-11-20", valor_fechado: 50000 }),
+      row("outro", { cliente_id: "eriel", status: "VENDA REALIZADA", data_cirurgia: "2026-10-20", valor_fechado: 50000 }),
+    ]);
+    expect(m.comPrev).toBe(1500);
+    expect(m.comTotal).toBe(500);
+    expect(m.projetados.map(r => r.id)).toEqual(["previsto", "pago"]);
+  });
+  it("uses the configured total percentage", () => {
+    const data: PanelData = { clientes: [], vendas: [row("previsto", { status: "VENDA REALIZADA", data_cirurgia: "2026-10-20", valor_fechado: 20000 })], metas: [], acompanhamento: [], investimentos: [], config: { pct_total: 7, pct_hunter: 3, pct_performance: 1, pct_atlas: 1 } };
+    expect(computeMetrics(data, ["victor"], "2026-10-01", "2026-10-31").comPrev).toBe(1400);
+  });
+  it("preserves absent revenue as null and recorded zero as zero", () => {
+    expect(metrics([row("vazio", { status: "VENDA REALIZADA", data_cirurgia: "2026-10-20" })]).comPrev).toBeNull();
+    expect(metrics([row("zero", { status: "VENDA REALIZADA", data_cirurgia: "2026-10-20", valor_fechado: 0 })]).comPrev).toBe(0);
+  });
+});
+
 describe("Budget card", () => {
   it("sums the Portal budget values, not closed values, for the filtered lead rows once", () => {
     const m = metrics([

@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Adicionar comissão prevista ao lado do faturamento previsto, sem exigir pagamento completo, com auditoria e teste de cálculo.
 - [x] Revisar tokens de cores, textos, ícones e gráficos de todas as telas; aparência conferida no login, telas protegidas sem sessão disponível.
 - [x] Adicionar botão de tema claro/escuro com escolha salva e impressão clara; teste de persistência aprovado.
 - [x] Ocultar selo Lovable, substituir favicon por A da Atlas e adicionar card de Orçamentos com auditoria; cálculo e painel conferidos.
