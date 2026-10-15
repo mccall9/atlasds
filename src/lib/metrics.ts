@@ -140,6 +140,7 @@ export function computeMetrics(d: PanelData, clienteIds: string[], de: string, a
     porConsulta, consultas, comparec, taxaComp: div(comparec, consultas),
     porVenda, vendasQtd, valorVendido: sum(porVenda, (r) => r.valor_fechado), taxaConv: div(vendasQtd, comparec),
     projetados, fatPrev, comPrev: fatPrev == null ? null : (fatPrev * cfg.pct_total) / 100,
+    comHunterPrev: fatPrev == null ? null : (fatPrev * cfg.pct_hunter) / 100,
     ticketPrev: div(fatPrev, projetados.length), meta, pctMeta: div(fatPrev, meta.min),
     futuros, fatFut, ticketFut: div(fatFut, futuros.length), pipeline,
     origens: [...origemMap.entries()].map(([origem, x]) => ({ origem, ...x })),

@@ -89,6 +89,18 @@ describe("Weekly follow-up", () => {
 });
 
 describe("Projected commission", () => {
+  it("separates the Hunter projection at 3% without requiring payment", () => {
+    const m = metrics([row("hunter", { status: "VENDA REALIZADA", data_cirurgia: "2026-10-20", valor_fechado: 20000, pago_100: false })]);
+    expect(m.comHunterPrev).toBe(600);
+    expect(m.comPrev).toBe(1000);
+    expect(m.comHunter).toBeNull();
+  });
+  it("uses the configured Hunter rate and preserves absent or zero revenue", () => {
+    const data: PanelData = { clientes: [], vendas: [row("hunter", { status: "VENDA REALIZADA", data_cirurgia: "2026-10-20", valor_fechado: 20000 })], metas: [], acompanhamento: [], investimentos: [], config: { pct_total: 5, pct_hunter: 4, pct_performance: 1, pct_atlas: 1 } };
+    expect(computeMetrics(data, ["victor"], "2026-10-01", "2026-10-31").comHunterPrev).toBe(800);
+    expect(metrics([row("vazio", { status: "VENDA REALIZADA", data_cirurgia: "2026-10-20" })]).comHunterPrev).toBeNull();
+    expect(metrics([row("zero", { status: "VENDA REALIZADA", data_cirurgia: "2026-10-20", valor_fechado: 0 })]).comHunterPrev).toBe(0);
+  });
   it("applies the total rate to projected revenue without requiring full payment", () => {
     const m = metrics([
       row("previsto", { status: "VENDA REALIZADA", data_cirurgia: "2026-10-20", valor_fechado: 20000, pago_100: false }),
