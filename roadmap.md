@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Separar Comissão Hunter prevista abaixo da comissão prevista total, com percentual configurado e teste.
 - [x] Adicionar comissão prevista ao lado do faturamento previsto, sem exigir pagamento completo, com auditoria; 17 testes de métricas aprovados e painel sem erros de compilação.
 - [x] Revisar tokens de cores, textos, ícones e gráficos de todas as telas; aparência conferida no login, telas protegidas sem sessão disponível.
 - [x] Adicionar botão de tema claro/escuro com escolha salva e impressão clara; teste de persistência aprovado.

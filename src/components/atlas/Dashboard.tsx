@@ -128,6 +128,7 @@ export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente
           <Card tone="teal" icon={Percent} label="Comissão Prevista" value={fmtBRL(m.comPrev)} hint={`${fmtPct(m.cfg.pct_total / 100)} do faturamento previsto`} onClick={open("Comissão prevista", m.projetados)} />
           <Card tone="teal" icon={Receipt} label="Ticket Médio" value={fmtBRL(m.ticketPrev)} />
           <Card tone="teal" icon={Target} label="Meta Esperada" value={fmtBRL(m.meta.min)} hint={m.pctMeta == null ? "Sem meta cadastrada" : `${fmtPct(m.pctMeta)} atingido`} />
+          <Card tone="teal" icon={UserCheck} label={`Comissão Hunter (${m.cfg.pct_hunter}%)`} value={fmtBRL(m.comHunterPrev)} hint="Prevista sobre o faturamento" onClick={open("Comissão prevista Hunter", m.projetados)} />
         </div>
       </Section>
 
