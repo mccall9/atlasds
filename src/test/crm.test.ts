@@ -14,7 +14,7 @@ describe("parseCrmLead", () => {
   });
 
   it("keeps missing fields null", () => {
-    expect(parseCrmLead({})).toEqual({ external_id: null, nome: null, telefone: null, email: null, campanha: null, conjunto: null, origem: null, etapa: null, valor: null, produto: null, situacao: null, criado_em: null, movido_em: null, ganho_em: null });
+    expect(parseCrmLead({})).toEqual({ external_id: null, nome: null, telefone: null, email: null, campanha: null, conjunto: null, criativo: null, origem: null, etapa: null, valor: null, produto: null, situacao: null, criado_em: null, movido_em: null, ganho_em: null });
   });
 });
 
@@ -28,7 +28,7 @@ describe("maskPhone", () => {
 describe("computeCrmMetrics", () => {
   const lead = (p: Partial<CrmLead>): CrmLead => ({
     id: Math.random().toString(), webhook_id: "w", cliente_id: null, external_id: null, nome: "x", telefone: null, email: null,
-    campanha: null, conjunto: null, origem: null, etapa: null, valor: null, produto: null, situacao: null, criado_em: null, movido_em: null, ganho_em: null, payload: {}, recebido_em: "2026-10-10T15:00:00Z", atualizado_em: "2026-10-10T15:00:00Z", ...p,
+    campanha: null, conjunto: null, criativo: null, origem: null, etapa: null, valor: null, produto: null, situacao: null, criado_em: null, movido_em: null, ganho_em: null, payload: {}, recebido_em: "2026-10-10T15:00:00Z", atualizado_em: "2026-10-10T15:00:00Z", ...p,
   });
 
   it("filters by São Paulo day and groups by campaign", () => {
@@ -91,8 +91,8 @@ describe("parseCrmGrid (CRM export)", () => {
 
 describe("campaign and ad set columns", () => {
   it("keeps Campanha and Conjunto apart", () => {
-    const [r] = parseCrmGrid([["ID", "Contact Name", "Campanha", "Conjunto"], ["1", "Ana", "[BARBEARIA] Corte", "Homens 18-45"]]);
-    expect(r).toMatchObject({ campanha: "[BARBEARIA] Corte", conjunto: "Homens 18-45" });
-    expect(parseCrmLead({ adset: { name: "Público A" }, campaign: { name: "Camp" } })).toMatchObject({ campanha: "Camp", conjunto: "Público A" });
+    const [r] = parseCrmGrid([["ID", "Contact Name", "Campanha", "Conjunto", "Criativo"], ["1", "Ana", "ATOS | ENGAJAMENTO", "FLORIANÓPOLIS | 3KM", "VIDEO - ANTES x DEPOIS"]]);
+    expect(r).toMatchObject({ campanha: "ATOS | ENGAJAMENTO", conjunto: "FLORIANÓPOLIS | 3KM", criativo: "VIDEO - ANTES x DEPOIS" });
+    expect(parseCrmLead({ adset: { name: "Público A" }, campaign: { name: "Camp" }, ad: { name: "Vídeo 1" } })).toMatchObject({ campanha: "Camp", conjunto: "Público A", criativo: "Vídeo 1" });
   });
 });

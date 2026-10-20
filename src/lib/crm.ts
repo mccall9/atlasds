@@ -8,6 +8,7 @@ export type CrmLeadFields = {
   email: string | null;
   campanha: string | null;
   conjunto: string | null;
+  criativo: string | null;
   origem: string | null;
   etapa: string | null;
   valor: number | null;
@@ -36,6 +37,7 @@ const ALIASES: Record<keyof CrmLeadFields, string[]> = {
   telefone: ["telefone", "phone", "phonenumber", "contactphone", "telefonedocontato", "celular", "whatsapp", "fone", "mobile", "numero", "number", "tel"],
   email: ["email", "emailaddress", "contactemail", "emaildocontato", "mail"],
   campanha: ["utmcampaign", "campanha", "campaign", "campaignname", "nomedacampanha", "campanhanome", "campaigntitle"],
+  criativo: ["criativo", "anuncio", "adname", "creative", "creativename", "nomedocriativo", "utmterm"],
   conjunto: ["conjunto", "conjuntodeanuncios", "adset", "adsetname", "adgroup", "utmcontent", "publico"],
   origem: ["utmsource", "origem", "source", "fonte", "canal", "leadsource", "plataforma", "sourcename", "origemnome"],
   etapa: ["etapa", "salesstep", "coluna", "stage", "fase", "pipelinestage", "stagename", "etapadofunil", "stagetitle", "etapanome", "colunanome", "fasename", "pipelinestagename", "status", "statusname"],
@@ -121,6 +123,7 @@ export function parseCrmLead(payload: unknown): CrmLeadFields {
     email: text(pick("email"))?.toLowerCase() ?? null,
     campanha: text(pick("campanha")),
     conjunto: text(pick("conjunto")),
+    criativo: text(pick("criativo")),
     origem: text(pick("origem"))?.toUpperCase() ?? null,
     etapa,
     valor: parseNumber(pick("valor")),
@@ -204,6 +207,7 @@ export function computeCrmMetrics(all: CrmLead[], de: string, ate: string, hoje 
     hoje: leads.filter((r) => crmDay(dataLead(r)) === hoje),
     campanhas: agrupar(leads, (r) => r.campanha, "Sem campanha"),
     conjuntos: agrupar(leads, (r) => r.conjunto, "Sem conjunto"),
+    criativos: agrupar(leads, (r) => r.criativo, "Sem criativo"),
     origens: agrupar(leads, (r) => r.origem, "SEM ORIGEM"),
     etapas: agrupar(leads, (r) => r.etapa, "Sem etapa"),
     produtos: agrupar(vendas, (r) => r.produto, "Sem produto/serviço"),

@@ -85,6 +85,13 @@
       "when": 1792902000000,
       "tag": "0011_crm_conjunto",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792903000000,
+      "tag": "0012_crm_criativo",
+      "breakpoints": true
     }
   ]
 }

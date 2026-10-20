@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  CalendarCheck, CalendarClock, Copy, ExternalLink, HeartHandshake, Layers, Megaphone, Percent, Phone, Plus, Receipt, RefreshCw, Scissors,
+  CalendarCheck, CalendarClock, Clapperboard, Copy, ExternalLink, HeartHandshake, Layers, Megaphone, Percent, Phone, Plus, Receipt, RefreshCw, Scissors,
   Sheet, Target, Trash2, TrendingUp, UserX, Users, Waypoints, Webhook,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,7 +85,7 @@ function Crm() {
   const m = useMemo(() => computeCrmMetrics(rows, range.de, range.ate), [rows, range.de, range.ate]);
   const open = (title: string, rs: CrmLead[]) => () => setAudit({ title, rows: rs });
   const nomeCliente = (id: string | null) => clientes.data?.find((c) => c.id === id)?.nome ?? "—";
-  const temCampanha = m.leads.some((r) => r.campanha || r.conjunto || r.origem);
+  const temCampanha = m.leads.some((r) => r.campanha || r.conjunto || r.criativo || r.origem);
 
   return (
     <div className="space-y-8">
@@ -158,12 +158,13 @@ function Crm() {
           <Section title="Campanhas" tone="purple">
             {temCampanha ? (
               <>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <Card tone="purple" icon={Megaphone} label="Campanhas" value={fmtInt(m.campanhas.filter((c) => c.nome !== "Sem campanha").length)} hint="Distintas no período" />
                   <Card tone="purple" icon={Layers} label="Conjuntos" value={fmtInt(m.conjuntos.filter((c) => c.nome !== "Sem conjunto").length)} hint="Distintos no período" />
+                  <Card tone="purple" icon={Clapperboard} label="Criativos" value={fmtInt(m.criativos.filter((c) => c.nome !== "Sem criativo").length)} hint="Distintos no período" />
                   <Card tone="purple" icon={Target} label="Leads com Campanha" value={fmtInt(m.comCampanha.length)} hint={m.taxaCampanha == null ? "Sem leads no período" : `${fmtPct(m.taxaCampanha)} dos leads`} onClick={open("Leads com campanha", m.comCampanha)} />
                 </div>
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                   <div className="space-y-2">
                     <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Por campanha · vendas</h3>
                     <Ranking grupos={m.campanhas} total={m.leads.length} vendas onOpen={(g) => setAudit({ title: `Campanha: ${g.nome}`, rows: g.rows })} />
@@ -172,21 +173,25 @@ function Crm() {
                     <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Por conjunto · vendas</h3>
                     <Ranking grupos={m.conjuntos} total={m.leads.length} icon={Layers} vendas onOpen={(g) => setAudit({ title: `Conjunto: ${g.nome}`, rows: g.rows })} />
                   </div>
+                  <div className="space-y-2">
+                    <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Por criativo · vendas</h3>
+                    <Ranking grupos={m.criativos} total={m.leads.length} icon={Clapperboard} vendas onOpen={(g) => setAudit({ title: `Criativo: ${g.nome}`, rows: g.rows })} />
+                  </div>
                 </div>
                 {m.origens.some((o) => o.nome !== "SEM ORIGEM") && (
                   <Ranking grupos={m.origens} total={m.leads.length} onOpen={(g) => setAudit({ title: `Origem: ${g.nome}`, rows: g.rows })} />
                 )}
               </>
             ) : (
-              <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">Os leads do período não trazem campanha nem origem. A exportação padrão do CRM não inclui esses campos; adicione colunas "Campanha" e "Conjunto" na planilha para preencher esta seção.</div>
+              <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">Os leads do período não trazem campanha nem origem. A exportação padrão do CRM não inclui esses campos; adicione colunas "Campanha", "Conjunto" e "Criativo" na planilha para preencher esta seção.</div>
             )}
           </Section>
 
           <Section title="Negócios do período">
             <div className="flex justify-end">
               <Button size="sm" variant="outline" onClick={() => csvDownload(`crm-${range.de}-${range.ate}.csv`, [
-                ["Criado em", "Nome", "Telefone", "E-mail", "Produto/Serviço", "Etapa", "Situação", "Valor", "Campanha", "Conjunto", "Origem", "Fonte"],
-                ...m.leads.map((r) => [fmtDateTime(dataLead(r)), r.nome, r.telefone, r.email, r.produto, r.etapa, r.situacao, r.valor, r.campanha, r.conjunto, r.origem, fontes.data?.find((f) => f.id === r.webhook_id)?.nome ?? ""]),
+                ["Criado em", "Nome", "Telefone", "E-mail", "Produto/Serviço", "Etapa", "Situação", "Valor", "Campanha", "Conjunto", "Criativo", "Origem", "Fonte"],
+                ...m.leads.map((r) => [fmtDateTime(dataLead(r)), r.nome, r.telefone, r.email, r.produto, r.etapa, r.situacao, r.valor, r.campanha, r.conjunto, r.criativo, r.origem, fontes.data?.find((f) => f.id === r.webhook_id)?.nome ?? ""]),
               ])}>Exportar CSV</Button>
             </div>
             <div className="overflow-x-auto rounded-2xl border bg-card p-2">
@@ -240,11 +245,11 @@ function LeadRows({ rows, nomeCliente, onPayload }: { rows: CrmLead[]; nomeClien
       <TableHeader>
         <TableRow>
           <TableHead>Criado em</TableHead><TableHead>Nome</TableHead><TableHead>Telefone</TableHead><TableHead>Produto/Serviço</TableHead>
-          <TableHead>Etapa</TableHead><TableHead className="text-right">Valor</TableHead><TableHead>Campanha</TableHead><TableHead>Conjunto</TableHead><TableHead>Cliente</TableHead><TableHead className="text-right">Dados</TableHead>
+          <TableHead>Etapa</TableHead><TableHead className="text-right">Valor</TableHead><TableHead>Campanha</TableHead><TableHead>Conjunto</TableHead><TableHead>Criativo</TableHead><TableHead>Cliente</TableHead><TableHead className="text-right">Dados</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.length === 0 && <TableRow><TableCell colSpan={10} className="py-10 text-center text-muted-foreground">Nenhum negócio no período.</TableCell></TableRow>}
+        {rows.length === 0 && <TableRow><TableCell colSpan={11} className="py-10 text-center text-muted-foreground">Nenhum negócio no período.</TableCell></TableRow>}
         {rows.map((r) => (
           <TableRow key={r.id}>
             <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{fmtDateTime(dataLead(r))}</TableCell>
@@ -255,6 +260,7 @@ function LeadRows({ rows, nomeCliente, onPayload }: { rows: CrmLead[]; nomeClien
             <TableCell className="text-right tabular-nums">{fmtBRL(r.valor)}</TableCell>
             <TableCell className="max-w-40 truncate" title={r.campanha ?? ""}>{r.campanha ?? "—"}</TableCell>
             <TableCell className="max-w-40 truncate" title={r.conjunto ?? ""}>{r.conjunto ?? "—"}</TableCell>
+            <TableCell className="max-w-40 truncate" title={r.criativo ?? ""}>{r.criativo ?? "—"}</TableCell>
             <TableCell>{nomeCliente(r.cliente_id)}</TableCell>
             <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => onPayload(r)}>Ver</Button></TableCell>
           </TableRow>

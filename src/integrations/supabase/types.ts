@@ -146,6 +146,7 @@ export type Database = {
           cliente_id: string | null
           conjunto: string | null
           criado_em: string | null
+          criativo: string | null
           email: string | null
           etapa: string | null
           external_id: string | null
@@ -168,6 +169,7 @@ export type Database = {
           cliente_id?: string | null
           conjunto?: string | null
           criado_em?: string | null
+          criativo?: string | null
           email?: string | null
           etapa?: string | null
           external_id?: string | null
@@ -190,6 +192,7 @@ export type Database = {
           cliente_id?: string | null
           conjunto?: string | null
           criado_em?: string | null
+          criativo?: string | null
           email?: string | null
           etapa?: string | null
           external_id?: string | null
