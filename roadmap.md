@@ -1,6 +1,6 @@
 # Roadmap
 - [x] Tela Integrações com fluxo OAuth nativo da Meta (App ID, App Secret, URL de redirecionamento, conexão e vínculo de contas aos doutores).
-- [ ] Importar investimento e conversas da Meta para os lançamentos — aguarda App ID/App Secret e a conexão da conta Atlas.
+- [x] Importar investimento e conversas da Meta das 7 contas vinculadas (843 dias), com leitura automática a cada 15 minutos e botão Importar agora.
 - [x] Separar Comissão Hunter prevista abaixo da comissão prevista total, com percentual configurado; 19 testes aprovados e painel sem erros de compilação.
 - [x] Adicionar comissão prevista ao lado do faturamento previsto, sem exigir pagamento completo, com auditoria; 17 testes de métricas aprovados e painel sem erros de compilação.
 - [x] Revisar tokens de cores, textos, ícones e gráficos de todas as telas; aparência conferida no login, telas protegidas sem sessão disponível.
