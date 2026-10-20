@@ -21,6 +21,7 @@ import { Route as CTokenRouteImport } from './routes/c.$token'
 import { Route as ApiPublicCronDriveChangesRouteImport } from './routes/api/public/cron/drive-changes'
 import { Route as ApiPublicCronSyncPortaisRouteImport } from './routes/api/public/cron/sync-portais'
 import { Route as ApiPublicGoogleDriveChangesRouteImport } from './routes/api/public/google-drive/changes'
+import { Route as ApiPublicMetaCallbackRouteImport } from './routes/api/public/meta/callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -86,6 +87,11 @@ const ApiPublicGoogleDriveChangesRoute =
     path: '/api/public/google-drive/changes',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicMetaCallbackRoute = ApiPublicMetaCallbackRouteImport.update({
+  id: '/api/public/meta/callback',
+  path: '/api/public/meta/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/drive-changes': typeof ApiPublicCronDriveChangesRoute
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
   '/api/public/google-drive/changes': typeof ApiPublicGoogleDriveChangesRoute
+  '/api/public/meta/callback': typeof ApiPublicMetaCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/drive-changes': typeof ApiPublicCronDriveChangesRoute
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
   '/api/public/google-drive/changes': typeof ApiPublicGoogleDriveChangesRoute
+  '/api/public/meta/callback': typeof ApiPublicMetaCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/api/public/cron/drive-changes': typeof ApiPublicCronDriveChangesRoute
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
   '/api/public/google-drive/changes': typeof ApiPublicGoogleDriveChangesRoute
+  '/api/public/meta/callback': typeof ApiPublicMetaCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/drive-changes'
     | '/api/public/cron/sync-portais'
     | '/api/public/google-drive/changes'
+    | '/api/public/meta/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/drive-changes'
     | '/api/public/cron/sync-portais'
     | '/api/public/google-drive/changes'
+    | '/api/public/meta/callback'
   id:
     | '__root__'
     | '/'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/drive-changes'
     | '/api/public/cron/sync-portais'
     | '/api/public/google-drive/changes'
+    | '/api/public/meta/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   ApiPublicCronDriveChangesRoute: typeof ApiPublicCronDriveChangesRoute
   ApiPublicCronSyncPortaisRoute: typeof ApiPublicCronSyncPortaisRoute
   ApiPublicGoogleDriveChangesRoute: typeof ApiPublicGoogleDriveChangesRoute
+  ApiPublicMetaCallbackRoute: typeof ApiPublicMetaCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -267,6 +280,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicGoogleDriveChangesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/meta/callback': {
+      id: '/api/public/meta/callback'
+      path: '/api/public/meta/callback'
+      fullPath: '/api/public/meta/callback'
+      preLoaderRoute: typeof ApiPublicMetaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -297,6 +317,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronDriveChangesRoute: ApiPublicCronDriveChangesRoute,
   ApiPublicCronSyncPortaisRoute: ApiPublicCronSyncPortaisRoute,
   ApiPublicGoogleDriveChangesRoute: ApiPublicGoogleDriveChangesRoute,
+  ApiPublicMetaCallbackRoute: ApiPublicMetaCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
