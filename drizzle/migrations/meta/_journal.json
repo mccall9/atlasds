@@ -71,6 +71,13 @@
       "when": 1792900000000,
       "tag": "0009_crm_webhook",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792901000000,
+      "tag": "0010_crm_planilha",
+      "breakpoints": true
     }
   ]
 }

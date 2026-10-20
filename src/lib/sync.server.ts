@@ -14,7 +14,7 @@ function headers() {
   return { Authorization: `Bearer ${lov}`, "X-Connection-Api-Key": key };
 }
 
-async function gget(path: string) {
+export async function gget(path: string) {
   return readSheets(`${GATEWAY}${path}`, headers());
 }
 

@@ -144,14 +144,19 @@ export type Database = {
           atualizado_em: string
           campanha: string | null
           cliente_id: string | null
+          criado_em: string | null
           email: string | null
           etapa: string | null
           external_id: string | null
+          ganho_em: string | null
           id: string
+          movido_em: string | null
           nome: string | null
           origem: string | null
           payload: Json
+          produto: string | null
           recebido_em: string
+          situacao: string | null
           telefone: string | null
           valor: number | null
           webhook_id: string
@@ -160,14 +165,19 @@ export type Database = {
           atualizado_em?: string
           campanha?: string | null
           cliente_id?: string | null
+          criado_em?: string | null
           email?: string | null
           etapa?: string | null
           external_id?: string | null
+          ganho_em?: string | null
           id?: string
+          movido_em?: string | null
           nome?: string | null
           origem?: string | null
           payload: Json
+          produto?: string | null
           recebido_em?: string
+          situacao?: string | null
           telefone?: string | null
           valor?: number | null
           webhook_id: string
@@ -176,14 +186,19 @@ export type Database = {
           atualizado_em?: string
           campanha?: string | null
           cliente_id?: string | null
+          criado_em?: string | null
           email?: string | null
           etapa?: string | null
           external_id?: string | null
+          ganho_em?: string | null
           id?: string
+          movido_em?: string | null
           nome?: string | null
           origem?: string | null
           payload?: Json
+          produto?: string | null
           recebido_em?: string
+          situacao?: string | null
           telefone?: string | null
           valor?: number | null
           webhook_id?: string
@@ -207,33 +222,42 @@ export type Database = {
       }
       crm_webhooks: {
         Row: {
+          aba: string | null
           ativo: boolean
           cliente_id: string | null
           created_at: string
           created_by: string | null
           id: string
           nome: string
+          spreadsheet_id: string | null
           token: string
+          ultimo_erro: string | null
           ultimo_recebimento: string | null
         }
         Insert: {
+          aba?: string | null
           ativo?: boolean
           cliente_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
           nome: string
+          spreadsheet_id?: string | null
           token?: string
+          ultimo_erro?: string | null
           ultimo_recebimento?: string | null
         }
         Update: {
+          aba?: string | null
           ativo?: boolean
           cliente_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
           nome?: string
+          spreadsheet_id?: string | null
           token?: string
+          ultimo_erro?: string | null
           ultimo_recebimento?: string | null
         }
         Relationships: [

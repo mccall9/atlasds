@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeCrmMetrics, maskPhone, parseCrmLead, type CrmLead } from "@/lib/crm";
+import { computeCrmMetrics, maskPhone, parseCrmGrid, parseCrmLead, parseWhen, type CrmLead } from "@/lib/crm";
 
 describe("parseCrmLead", () => {
   it("reads flat Portuguese fields with accents and spacing", () => {
@@ -14,7 +14,7 @@ describe("parseCrmLead", () => {
   });
 
   it("keeps missing fields null", () => {
-    expect(parseCrmLead({})).toEqual({ external_id: null, nome: null, telefone: null, email: null, campanha: null, origem: null, etapa: null, valor: null });
+    expect(parseCrmLead({})).toEqual({ external_id: null, nome: null, telefone: null, email: null, campanha: null, origem: null, etapa: null, valor: null, produto: null, situacao: null, criado_em: null, movido_em: null, ganho_em: null });
   });
 });
 
@@ -28,7 +28,7 @@ describe("maskPhone", () => {
 describe("computeCrmMetrics", () => {
   const lead = (p: Partial<CrmLead>): CrmLead => ({
     id: Math.random().toString(), webhook_id: "w", cliente_id: null, external_id: null, nome: "x", telefone: null, email: null,
-    campanha: null, origem: null, etapa: null, valor: null, payload: {}, recebido_em: "2026-10-10T15:00:00Z", atualizado_em: "2026-10-10T15:00:00Z", ...p,
+    campanha: null, origem: null, etapa: null, valor: null, produto: null, situacao: null, criado_em: null, movido_em: null, ganho_em: null, payload: {}, recebido_em: "2026-10-10T15:00:00Z", atualizado_em: "2026-10-10T15:00:00Z", ...p,
   });
 
   it("filters by São Paulo day and groups by campaign", () => {
@@ -46,6 +46,45 @@ describe("computeCrmMetrics", () => {
     expect(m.comTelefone).toHaveLength(1);
     expect(m.campanhas.map((c) => [c.nome, c.qtd])).toEqual([["A", 2], ["B", 1], ["Sem campanha", 1]]);
     expect(m.mediaDia).toBeCloseTo(4 / 3);
-    expect(m.valor).toBeNull();
+    expect(m.faturamento).toBeNull();
+  });
+});
+
+describe("parseCrmGrid (CRM export)", () => {
+  const head = ["ID", "Status", "Amount", "Created At", "Last Updated", "Won At", "Last Moved", "Contact Name", "Contact E-mail", "Contact Phone", "Product/Service", "Sales Step"];
+  const grid = [
+    head,
+    ["8100137", "WON", "45.00", "Sun Oct 04 2026 13:02:05 GMT+0000 (Coordinated Universal Time)", "Tue Oct 20 2026 12:07:13 GMT+0000 (Coordinated Universal Time)",
+      "Sat Oct 10 2026 15:17:05 GMT+0000 (Coordinated Universal Time)", "Sat Oct 10 2026 15:17:05 GMT+0000 (Coordinated Universal Time)", "Bruno Lima", "", "5548999074115", "Corte", "VENDA REALIZADA"],
+    ["8100000", "OPEN", "", "Fri Sep 11 2026 12:25:41 GMT+0000 (Coordinated Universal Time)", "", "", "Sat Sep 12 2026 14:48:41 GMT+0000 (Coordinated Universal Time)", "Rafael Souza", "", "5548999076387", "", "NOVO CONTATO"],
+    [],
+  ];
+
+  it("maps export columns by header name", () => {
+    const [a, b] = parseCrmGrid(grid);
+    expect(a).toMatchObject({
+      external_id: "8100137", nome: "Bruno Lima", telefone: "5548999074115", valor: 45, produto: "Corte", etapa: "VENDA REALIZADA", situacao: "WON",
+      criado_em: "2026-10-04T13:02:05.000Z", ganho_em: "2026-10-10T15:17:05.000Z", movido_em: "2026-10-10T15:17:05.000Z",
+    });
+    expect(b).toMatchObject({ external_id: "8100000", etapa: "NOVO CONTATO", situacao: "OPEN", valor: null, produto: null });
+    expect(parseCrmGrid(grid)).toHaveLength(2);
+  });
+
+  it("parses Brazilian dates at noon in São Paulo", () => {
+    expect(parseWhen("05/10/2026")).toBe("2026-10-05T15:00:00.000Z");
+    expect(parseWhen("")).toBeNull();
+  });
+
+  it("counts sales by the date they reached Venda Realizada", () => {
+    const leads = parseCrmGrid(grid).map((l, i) => ({ ...l, id: String(i), webhook_id: "w", cliente_id: null, recebido_em: "2026-10-20T12:00:00Z", atualizado_em: "2026-10-20T12:00:00Z" }));
+    const out = computeCrmMetrics(leads, "2026-10-01", "2026-10-31");
+    expect(out.leads.map((r) => r.nome)).toEqual(["Bruno Lima"]);
+    expect(out.vendas).toHaveLength(1);
+    expect(out.faturamento).toBe(45);
+    expect(out.ticket).toBe(45);
+    expect(out.cicloMedio).toBeCloseTo(6.09, 1);
+    const set = computeCrmMetrics(leads, "2026-09-01", "2026-09-30");
+    expect(set.leads.map((r) => r.nome)).toEqual(["Rafael Souza"]);
+    expect(set.vendas).toHaveLength(0);
   });
 });
