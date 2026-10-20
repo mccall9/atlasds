@@ -144,6 +144,7 @@ export type Database = {
           atualizado_em: string
           campanha: string | null
           cliente_id: string | null
+          conjunto: string | null
           criado_em: string | null
           email: string | null
           etapa: string | null
@@ -165,6 +166,7 @@ export type Database = {
           atualizado_em?: string
           campanha?: string | null
           cliente_id?: string | null
+          conjunto?: string | null
           criado_em?: string | null
           email?: string | null
           etapa?: string | null
@@ -186,6 +188,7 @@ export type Database = {
           atualizado_em?: string
           campanha?: string | null
           cliente_id?: string | null
+          conjunto?: string | null
           criado_em?: string | null
           email?: string | null
           etapa?: string | null

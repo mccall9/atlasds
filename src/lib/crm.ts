@@ -7,6 +7,7 @@ export type CrmLeadFields = {
   telefone: string | null;
   email: string | null;
   campanha: string | null;
+  conjunto: string | null;
   origem: string | null;
   etapa: string | null;
   valor: number | null;
@@ -34,7 +35,8 @@ const ALIASES: Record<keyof CrmLeadFields, string[]> = {
   nome: ["nome", "nomecompleto", "name", "fullname", "nomedolead", "nomedopaciente", "nomedocontato", "contactname", "nomedocliente", "cliente", "firstname"],
   telefone: ["telefone", "phone", "phonenumber", "contactphone", "telefonedocontato", "celular", "whatsapp", "fone", "mobile", "numero", "number", "tel"],
   email: ["email", "emailaddress", "contactemail", "emaildocontato", "mail"],
-  campanha: ["utmcampaign", "campanha", "campaign", "campaignname", "nomedacampanha", "adname", "anuncio", "adsetname", "conjunto", "campanhanome", "campaigntitle"],
+  campanha: ["utmcampaign", "campanha", "campaign", "campaignname", "nomedacampanha", "campanhanome", "campaigntitle"],
+  conjunto: ["conjunto", "conjuntodeanuncios", "adset", "adsetname", "adgroup", "utmcontent", "publico"],
   origem: ["utmsource", "origem", "source", "fonte", "canal", "leadsource", "plataforma", "sourcename", "origemnome"],
   etapa: ["etapa", "salesstep", "coluna", "stage", "fase", "pipelinestage", "stagename", "etapadofunil", "stagetitle", "etapanome", "colunanome", "fasename", "pipelinestagename", "status", "statusname"],
   valor: ["valor", "amount", "value", "price", "preco", "valordonegocio", "dealvalue", "valorfechado"],
@@ -118,6 +120,7 @@ export function parseCrmLead(payload: unknown): CrmLeadFields {
     telefone,
     email: text(pick("email"))?.toLowerCase() ?? null,
     campanha: text(pick("campanha")),
+    conjunto: text(pick("conjunto")),
     origem: text(pick("origem"))?.toUpperCase() ?? null,
     etapa,
     valor: parseNumber(pick("valor")),
@@ -200,6 +203,7 @@ export function computeCrmMetrics(all: CrmLead[], de: string, ate: string, hoje 
     comCampanha,
     hoje: leads.filter((r) => crmDay(dataLead(r)) === hoje),
     campanhas: agrupar(leads, (r) => r.campanha, "Sem campanha"),
+    conjuntos: agrupar(leads, (r) => r.conjunto, "Sem conjunto"),
     origens: agrupar(leads, (r) => r.origem, "SEM ORIGEM"),
     etapas: agrupar(leads, (r) => r.etapa, "Sem etapa"),
     produtos: agrupar(vendas, (r) => r.produto, "Sem produto/serviço"),
