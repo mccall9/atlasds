@@ -65,7 +65,7 @@ function Investimentos() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-semibold">Investimento em anúncios</h1><p className="text-sm text-muted-foreground">Lançamento manual enquanto Meta Ads e Google Ads não estão conectados.</p></div>
+      <div><h1 className="text-2xl font-semibold">Investimento em anúncios</h1><p className="text-sm text-muted-foreground">Meta Ads é importado automaticamente das contas vinculadas em Integrações; use o lançamento manual para Google Ads ou ajustes.</p></div>
       <div className="grid gap-3 rounded-2xl border bg-card p-5 md:grid-cols-6">
         <div className="space-y-1.5 md:col-span-2"><Label>Cliente</Label>
           <Select value={f.cliente_id} onValueChange={(v) => setF({ ...f, cliente_id: v })}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -87,16 +87,17 @@ function Investimentos() {
       </div>
       <div className="overflow-x-auto rounded-2xl border bg-card p-2">
         <Table>
-          <TableHeader><TableRow><TableHead>Data</TableHead><TableHead>Cliente</TableHead><TableHead>Plataforma</TableHead><TableHead className="text-right">Investido</TableHead><TableHead className="text-right">Conversas</TableHead><TableHead /></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Data</TableHead><TableHead>Cliente</TableHead><TableHead>Plataforma</TableHead><TableHead>Origem</TableHead><TableHead className="text-right">Investido</TableHead><TableHead className="text-right">Conversas</TableHead><TableHead /></TableRow></TableHeader>
           <TableBody>
-            {lista.data?.length === 0 && <TableRow><TableCell colSpan={6} className="py-8 text-center text-muted-foreground">Nenhum lançamento.</TableCell></TableRow>}
+            {lista.data?.length === 0 && <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Nenhum lançamento.</TableCell></TableRow>}
             {lista.data?.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>{fmtDate(r.data)}</TableCell><TableCell>{nome(r.cliente_id)}</TableCell>
                 <TableCell>{r.plataforma === "meta" ? "Meta Ads" : "Google Ads"}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{r.origem === "meta_api" ? "Importado da Meta" : "Manual"}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmtBRL(Number(r.valor_investido))}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmtInt(r.conversas_iniciadas)}</TableCell>
-                <TableCell className="text-right"><Button size="icon" variant="ghost" onClick={() => del(r.id)}><Trash2 className="size-4" /></Button></TableCell>
+                <TableCell className="text-right">{r.origem !== "meta_api" && <Button size="icon" variant="ghost" onClick={() => del(r.id)}><Trash2 className="size-4" /></Button>}</TableCell>
               </TableRow>
             ))}
           </TableBody>

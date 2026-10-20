@@ -57,6 +57,13 @@
       "when": 1792498997590,
       "tag": "0007_meta_ads_oauth",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792500090839,
+      "tag": "0008_investimento_meta_import",
+      "breakpoints": true
     }
   ]
 }

@@ -17,14 +17,14 @@ export const getMetaStatus = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
       .from("meta_conexao")
-      .select("meta_user_name, meta_user_id, token_expires_at, connected_at, scopes")
+      .select("meta_user_name, meta_user_id, token_expires_at, connected_at, scopes, last_import_at, last_import_error")
       .eq("id", 1)
       .maybeSingle();
     return {
       appIdConfigurado: !!appId,
       appSecretConfigurado: !!appSecret,
       conexao: data
-        ? { nome: data.meta_user_name, id: data.meta_user_id, expiraEm: data.token_expires_at, conectadoEm: data.connected_at, permissoes: data.scopes }
+        ? { nome: data.meta_user_name, id: data.meta_user_id, expiraEm: data.token_expires_at, conectadoEm: data.connected_at, permissoes: data.scopes, importadoEm: data.last_import_at, erroImportacao: data.last_import_error }
         : null,
     };
   });
@@ -77,4 +77,12 @@ export const disconnectMeta = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("meta_conexao").delete().eq("id", 1);
     return { ok: true };
+  });
+
+export const importMetaNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { importMetaInvestimentos } = await import("./meta.server");
+    return importMetaInvestimentos({ dias: 400 });
   });
