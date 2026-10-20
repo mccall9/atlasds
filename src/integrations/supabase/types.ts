@@ -224,6 +224,107 @@ export type Database = {
           },
         ]
       }
+      meta_conexao: {
+        Row: {
+          access_token: string
+          connected_at: string
+          connected_by: string | null
+          id: number
+          meta_user_id: string
+          meta_user_name: string | null
+          scopes: string | null
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          connected_at?: string
+          connected_by?: string | null
+          id?: number
+          meta_user_id: string
+          meta_user_name?: string | null
+          scopes?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          connected_at?: string
+          connected_by?: string | null
+          id?: number
+          meta_user_id?: string
+          meta_user_name?: string | null
+          scopes?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      meta_contas_anuncio: {
+        Row: {
+          ad_account_id: string
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          moeda: string | null
+          nome: string | null
+        }
+        Insert: {
+          ad_account_id: string
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          moeda?: string | null
+          nome?: string | null
+        }
+        Update: {
+          ad_account_id?: string
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          moeda?: string | null
+          nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_contas_anuncio_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_oauth_states: {
+        Row: {
+          created_at: string
+          expires_at: string
+          redirect_uri: string
+          return_origin: string
+          state: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          redirect_uri: string
+          return_origin: string
+          state: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          redirect_uri?: string
+          return_origin?: string
+          state?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       metas: {
         Row: {
           alcancado: number | null
