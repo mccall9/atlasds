@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -10,9 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AdminOnly } from "@/components/atlas/AppShell";
-import { fmtDate } from "@/lib/format";
+import { fmtDate, fmtDateTime } from "@/lib/format";
 import { META_ERROR_MESSAGES, META_ORIGINS, META_SCOPES, metaRedirectUri } from "@/lib/meta-config";
-import { disconnectMeta, getMetaStatus, listMetaAdAccounts, startMetaOAuth } from "@/lib/meta.functions";
+import { disconnectMeta, getMetaStatus, importMetaNow, listMetaAdAccounts, startMetaOAuth } from "@/lib/meta.functions";
 
 export const Route = createFileRoute("/_authenticated/integracoes")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -66,6 +66,8 @@ function Integracoes() {
   const startFn = useServerFn(startMetaOAuth);
   const listFn = useServerFn(listMetaAdAccounts);
   const disconnectFn = useServerFn(disconnectMeta);
+  const importFn = useServerFn(importMetaNow);
+  const [importando, setImportando] = useState(false);
 
   const status = useQuery({ queryKey: ["meta-status"], queryFn: () => statusFn() });
   const conectado = !!status.data?.conexao;
@@ -110,6 +112,22 @@ function Integracoes() {
     if (error) { toast.error("Não foi possível salvar o vínculo"); return; }
     toast.success(clienteId === NONE ? "Vínculo removido" : "Conta vinculada ao doutor");
     qc.invalidateQueries({ queryKey: ["meta-vinculos"] });
+  };
+
+  const importar = async () => {
+    setImportando(true);
+    try {
+      const r = await importFn();
+      if (r.ok) toast.success(`Investimento atualizado: ${r.dias} dia(s) de ${r.contas} conta(s)`);
+      else toast.error(r.erro === "desconectado" ? "Conecte a Meta antes de importar." : `Algumas contas não foram lidas: ${r.erro}`);
+    } catch {
+      toast.error("Não foi possível importar agora.");
+    } finally {
+      setImportando(false);
+      qc.invalidateQueries({ queryKey: ["meta-status"] });
+      qc.invalidateQueries({ queryKey: ["investimentos"] });
+      qc.invalidateQueries({ queryKey: ["panel"] });
+    }
   };
 
   const atual = typeof window !== "undefined" ? window.location.origin : "";
@@ -209,6 +227,15 @@ function Integracoes() {
             </Table>
           </div>
         )}
+      </Step>
+
+      <Step n={5} title="Importar investimento e conversas">
+        <p>O painel lê da Meta o valor investido e as conversas iniciadas por dia de cada conta vinculada. A leitura roda sozinha junto com a atualização de 15 em 15 minutos (últimos 40 dias); o botão abaixo relê os últimos 13 meses.</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button onClick={importar} disabled={!conectado || importando}><RefreshCw className={importando ? "size-4 animate-spin" : "size-4"} />{importando ? "Importando…" : "Importar agora"}</Button>
+          <span className="text-xs">Última importação: {status.data?.conexao?.importadoEm ? fmtDateTime(status.data.conexao.importadoEm) : "—"}</span>
+        </div>
+        {status.data?.conexao?.erroImportacao && <p className="text-xs text-g-red">{status.data.conexao.erroImportacao}</p>}
       </Step>
     </div>
   );

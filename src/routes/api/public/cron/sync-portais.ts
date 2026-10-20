@@ -23,7 +23,10 @@ export const Route = createFileRoute("/api/public/cron/sync-portais")({
           if (denied) return denied;
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const meta = await importMetaIfDue(supabaseAdmin);
+        const meta = await importMetaIfDue(supabaseAdmin).catch((e) => {
+          console.error("[meta] scheduled import", e instanceof Error ? e.message : e);
+          return { ok: false };
+        });
         const since = new Date(Date.now() - 15 * 60_000).toISOString();
         const { count, error } = await supabaseAdmin.from("sync_logs").select("id", { count: "exact", head: true }).gte("inicio", since);
         if (error) return Response.json({ error: "Sync status unavailable" }, { status: 503 });
