@@ -185,32 +185,41 @@ export type Database = {
       }
       investimento_anuncios: {
         Row: {
+          atualizado_em: string | null
           cliente_id: string
           conversas_iniciadas: number
           created_at: string
           created_by: string | null
           data: string
           id: string
+          meta_ad_account_id: string | null
+          origem: string
           plataforma: string
           valor_investido: number
         }
         Insert: {
+          atualizado_em?: string | null
           cliente_id: string
           conversas_iniciadas?: number
           created_at?: string
           created_by?: string | null
           data: string
           id?: string
+          meta_ad_account_id?: string | null
+          origem?: string
           plataforma: string
           valor_investido?: number
         }
         Update: {
+          atualizado_em?: string | null
           cliente_id?: string
           conversas_iniciadas?: number
           created_at?: string
           created_by?: string | null
           data?: string
           id?: string
+          meta_ad_account_id?: string | null
+          origem?: string
           plataforma?: string
           valor_investido?: number
         }
@@ -230,6 +239,8 @@ export type Database = {
           connected_at: string
           connected_by: string | null
           id: number
+          last_import_at: string | null
+          last_import_error: string | null
           meta_user_id: string
           meta_user_name: string | null
           scopes: string | null
@@ -241,6 +252,8 @@ export type Database = {
           connected_at?: string
           connected_by?: string | null
           id?: number
+          last_import_at?: string | null
+          last_import_error?: string | null
           meta_user_id: string
           meta_user_name?: string | null
           scopes?: string | null
@@ -252,6 +265,8 @@ export type Database = {
           connected_at?: string
           connected_by?: string | null
           id?: number
+          last_import_at?: string | null
+          last_import_error?: string | null
           meta_user_id?: string
           meta_user_name?: string | null
           scopes?: string | null
