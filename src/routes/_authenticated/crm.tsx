@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  CalendarCheck, CalendarClock, Clapperboard, Copy, ExternalLink, HeartHandshake, Layers, Megaphone, Percent, Phone, Plus, Receipt, RefreshCw, Scissors,
+  CalendarCheck, CalendarClock, Clapperboard, Copy, ExternalLink, FileDown, HeartHandshake, Layers, Megaphone, Percent, Phone, Plus, Receipt, RefreshCw, Scissors,
   Sheet, Target, Trash2, TrendingUp, UserX, Users, Waypoints, Webhook,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,10 +15,12 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AdminOnly } from "@/components/atlas/AppShell";
+import { AdminOnly, useConfig } from "@/components/atlas/AppShell";
+import { PanelTitle, PrintFooter } from "@/components/atlas/PanelHeader";
 import { Card, Section } from "@/components/atlas/Dashboard";
 import { computeCrmMetrics, dataLead, isVenda, maskPhone, type CrmLead } from "@/lib/crm";
 import { syncCrmNow } from "@/lib/crm.functions";
+import { printPanel } from "@/lib/print-panel";
 import { extractSpreadsheetId } from "@/lib/parse";
 import { csvDownload, fmtBRL, fmtDate, fmtDateTime, fmtInt, fmtPct, presetRange, type Preset } from "@/lib/format";
 
@@ -56,6 +58,7 @@ type Audit = { title: string; rows: CrmLead[] } | null;
 
 function Crm() {
   const qc = useQueryClient();
+  const cfg = useConfig();
   const [preset, setPreset] = useState<Preset>("este-mes");
   const [custom, setCustom] = useState(() => presetRange("este-mes"));
   const range = preset === "custom" ? custom : presetRange(preset);
@@ -85,21 +88,20 @@ function Crm() {
   const m = useMemo(() => computeCrmMetrics(rows, range.de, range.ate), [rows, range.de, range.ate]);
   const open = (title: string, rs: CrmLead[]) => () => setAudit({ title, rows: rs });
   const nomeCliente = (id: string | null) => clientes.data?.find((c) => c.id === id)?.nome ?? "—";
+  const fonteNome = fonteFiltro === "todos" ? "Todas as fontes" : fontes.data?.find((f) => f.id === fonteFiltro)?.nome ?? "CRM";
+  const ultimaLeitura = (fontes.data ?? []).filter((f) => fonteFiltro === "todos" || f.id === fonteFiltro).map((f) => f.ultimo_recebimento).filter(Boolean).sort().at(-1) ?? null;
   const temCampanha = m.leads.some((r) => r.campanha || r.conjunto || r.criativo || r.origem);
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-start gap-3">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-g-purple-soft text-g-purple"><Webhook className="size-5" /></div>
-        <div>
-          <h1 className="text-2xl font-semibold">CRM <span className="ml-1 rounded-full bg-g-yellow-soft px-2 py-0.5 align-middle text-xs font-medium text-g-yellow">teste</span></h1>
-          <p className="text-sm text-muted-foreground">Leads e vendas do CRM, lidos de uma planilha (exportação do CRM) ou recebidos por webhook. Não altera os Portais nem o Painel.</p>
-        </div>
-      </div>
+    <div className="panel-report space-y-8">
+      <PanelTitle
+        logoUrl={cfg.data?.logo_url} title="Relatório CRM" de={range.de} ate={range.ate} clienteNome={fonteNome} lastSync={ultimaLeitura}
+        subtitle="Teste · leads e vendas do CRM lidos de uma planilha (exportação do CRM) ou recebidos por webhook. Não altera os Portais nem o Painel."
+      />
 
-      <Fontes fontes={fontes.data} loading={fontes.isLoading} clientes={clientes.data ?? []} onChange={refresh} />
+      <div className="no-print"><Fontes fontes={fontes.data} loading={fontes.isLoading} clientes={clientes.data ?? []} onChange={refresh} /></div>
 
-      <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-2 border-y bg-background/90 px-4 py-3 backdrop-blur md:-mx-8 md:px-8">
+      <div className="no-print sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-2 border-y bg-background/90 px-4 py-3 backdrop-blur md:-mx-8 md:px-8">
         <Select value={fonteFiltro} onValueChange={setFonteFiltro}>
           <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -120,12 +122,13 @@ function Crm() {
           <span className="text-sm font-medium">{fmtDate(range.de)} - {fmtDate(range.ate)}</span>
         )}
         <span className="text-xs text-muted-foreground">Leads pela data de criação · vendas pela data em que entraram em Venda Realizada</span>
+        <Button size="sm" className="ml-auto" disabled={!leads.data} onClick={() => void printPanel(fonteNome, range.de, range.ate)}><FileDown className="size-4" />Exportar PDF</Button>
       </div>
 
       {leads.isLoading ? <Skeleton className="h-64 w-full" /> : leads.isError ? (
         <p className="text-sm text-destructive">Não foi possível carregar os leads do CRM.</p>
       ) : (
-        <div className="space-y-10">
+        <div className="report-dashboard space-y-10">
           <Section title="Leads" tone="blue">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               <Card tone="blue" icon={Users} label="Novos Leads" value={fmtInt(m.leads.length)} hint="Criados no período" onClick={open("Novos leads", m.leads)} />
@@ -187,20 +190,24 @@ function Crm() {
             )}
           </Section>
 
-          <Section title="Negócios do período">
-            <div className="flex justify-end">
+          <Section title="Negócios do período" className="report-leads">
+            <div className="no-print flex justify-end">
               <Button size="sm" variant="outline" onClick={() => csvDownload(`crm-${range.de}-${range.ate}.csv`, [
                 ["Criado em", "Nome", "Telefone", "E-mail", "Produto/Serviço", "Etapa", "Situação", "Valor", "Campanha", "Conjunto", "Criativo", "Origem", "Fonte"],
                 ...m.leads.map((r) => [fmtDateTime(dataLead(r)), r.nome, r.telefone, r.email, r.produto, r.etapa, r.situacao, r.valor, r.campanha, r.conjunto, r.criativo, r.origem, fontes.data?.find((f) => f.id === r.webhook_id)?.nome ?? ""]),
               ])}>Exportar CSV</Button>
             </div>
-            <div className="overflow-x-auto rounded-2xl border bg-card p-2">
+            <div className="no-print overflow-x-auto rounded-2xl border bg-card p-2">
               <LeadRows rows={m.leads.slice(0, 200)} nomeCliente={nomeCliente} onPayload={setPayload} />
             </div>
-            {m.leads.length > 200 && <p className="text-xs text-muted-foreground">Mostrando os 200 mais recentes de {fmtInt(m.leads.length)}. O CSV traz todos.</p>}
+            {/* The printed report always lists every lead of the period. */}
+            <div className="print-only"><LeadRows rows={m.leads} nomeCliente={nomeCliente} onPayload={setPayload} /></div>
+            {m.leads.length > 200 && <p className="no-print text-xs text-muted-foreground">Mostrando os 200 mais recentes de {fmtInt(m.leads.length)}. O CSV e o PDF trazem todos.</p>}
           </Section>
         </div>
       )}
+
+      <PrintFooter />
 
       <Dialog open={!!audit} onOpenChange={(o) => !o && setAudit(null)}>
         <DialogContent className="max-w-5xl">
@@ -225,16 +232,24 @@ function Ranking({ grupos, total, onOpen, icon: Icon = Megaphone, comValor, vend
   if (!grupos.length) return <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">Nenhum registro no período.</div>;
   return (
     <div className="divide-y rounded-2xl border bg-card">
-      {grupos.slice(0, 10).map((g) => (
-        <button key={g.nome} type="button" onClick={() => onOpen(g)} className="flex w-full items-center gap-3 px-5 py-3 text-left transition hover:bg-muted/50">
-          <Icon className="size-4 shrink-0 text-muted-foreground" />
-          <span className="min-w-0 flex-1 truncate text-sm font-medium" title={g.nome}>{g.nome}</span>
-          <div className="hidden h-1.5 w-28 overflow-hidden rounded-full bg-muted sm:block"><div className="h-full rounded-full bg-primary" style={{ width: `${total ? (g.qtd / total) * 100 : 0}%` }} /></div>
-          {comValor && <span className="w-24 text-right text-xs tabular-nums text-muted-foreground">{fmtBRL(g.valor)}</span>}
-          {vendas && <span className="w-20 text-right text-xs tabular-nums text-g-green" title="Leads deste grupo que viraram venda">{fmtInt(g.rows.filter(isVenda).length)} venda{g.rows.filter(isVenda).length === 1 ? "" : "s"}</span>}
-          <span className="w-10 text-right text-sm tabular-nums">{fmtInt(g.qtd)}</span>
-        </button>
-      ))}
+      {grupos.slice(0, 10).map((g) => {
+        const qtdVendas = g.rows.filter(isVenda).length;
+        return (
+          <button key={g.nome} type="button" onClick={() => onOpen(g)} className="block w-full space-y-2 px-5 py-3.5 text-left transition hover:bg-muted/50">
+            <div className="flex items-start gap-2.5">
+              <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 flex-1 break-words text-sm font-medium leading-snug">{g.nome}</span>
+              <span className="shrink-0 text-sm font-semibold tabular-nums">{fmtInt(g.qtd)}</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${total ? (g.qtd / total) * 100 : 0}%` }} /></div>
+            <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+              <span>{fmtPct(total ? g.qtd / total : null)} do total</span>
+              {vendas && <span className="font-medium text-g-green">{fmtInt(qtdVendas)} venda{qtdVendas === 1 ? "" : "s"} · {fmtPct(g.qtd ? qtdVendas / g.qtd : null)} conversão</span>}
+              {comValor && <span className="font-medium text-foreground">{fmtBRL(g.valor)}</span>}
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -245,7 +260,7 @@ function LeadRows({ rows, nomeCliente, onPayload }: { rows: CrmLead[]; nomeClien
       <TableHeader>
         <TableRow>
           <TableHead>Criado em</TableHead><TableHead>Nome</TableHead><TableHead>Telefone</TableHead><TableHead>Produto/Serviço</TableHead>
-          <TableHead>Etapa</TableHead><TableHead className="text-right">Valor</TableHead><TableHead>Campanha</TableHead><TableHead>Conjunto</TableHead><TableHead>Criativo</TableHead><TableHead>Cliente</TableHead><TableHead className="text-right">Dados</TableHead>
+          <TableHead>Etapa</TableHead><TableHead className="text-right">Valor</TableHead><TableHead>Campanha</TableHead><TableHead>Conjunto</TableHead><TableHead>Criativo</TableHead><TableHead>Cliente</TableHead><TableHead className="no-print text-right">Dados</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -262,7 +277,7 @@ function LeadRows({ rows, nomeCliente, onPayload }: { rows: CrmLead[]; nomeClien
             <TableCell className="max-w-40 truncate" title={r.conjunto ?? ""}>{r.conjunto ?? "—"}</TableCell>
             <TableCell className="max-w-40 truncate" title={r.criativo ?? ""}>{r.criativo ?? "—"}</TableCell>
             <TableCell>{nomeCliente(r.cliente_id)}</TableCell>
-            <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => onPayload(r)}>Ver</Button></TableCell>
+            <TableCell className="no-print text-right"><Button size="sm" variant="ghost" onClick={() => onPayload(r)}>Ver</Button></TableCell>
           </TableRow>
         ))}
       </TableBody>
