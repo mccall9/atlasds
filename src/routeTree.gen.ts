@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
 import { Route as AuthenticatedIntegracoesRouteImport } from './routes/_authenticated/integracoes'
 import { Route as AuthenticatedInvestimentosRouteImport } from './routes/_authenticated/investimentos'
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated/logs'
@@ -23,6 +24,7 @@ import { Route as ApiPublicCronDriveChangesRouteImport } from './routes/api/publ
 import { Route as ApiPublicCronSyncPortaisRouteImport } from './routes/api/public/cron/sync-portais'
 import { Route as ApiPublicGoogleDriveChangesRouteImport } from './routes/api/public/google-drive/changes'
 import { Route as ApiPublicMetaCallbackRouteImport } from './routes/api/public/meta/callback'
+import { Route as ApiPublicWebhooksCrmTokenRouteImport } from './routes/api/public/webhooks/crm.$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -49,6 +51,11 @@ const AuthenticatedConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCrmRoute = AuthenticatedCrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedIntegracoesRoute =
   AuthenticatedIntegracoesRouteImport.update({
     id: '/integracoes',
@@ -99,12 +106,19 @@ const ApiPublicMetaCallbackRoute = ApiPublicMetaCallbackRouteImport.update({
   path: '/api/public/meta/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWebhooksCrmTokenRoute =
+  ApiPublicWebhooksCrmTokenRouteImport.update({
+    id: '/api/public/webhooks/crm/$token',
+    path: '/api/public/webhooks/crm/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/crm': typeof AuthenticatedCrmRoute
   '/integracoes': typeof AuthenticatedIntegracoesRoute
   '/investimentos': typeof AuthenticatedInvestimentosRoute
   '/logs': typeof AuthenticatedLogsRoute
@@ -114,12 +128,14 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
   '/api/public/google-drive/changes': typeof ApiPublicGoogleDriveChangesRoute
   '/api/public/meta/callback': typeof ApiPublicMetaCallbackRoute
+  '/api/public/webhooks/crm/$token': typeof ApiPublicWebhooksCrmTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/crm': typeof AuthenticatedCrmRoute
   '/integracoes': typeof AuthenticatedIntegracoesRoute
   '/investimentos': typeof AuthenticatedInvestimentosRoute
   '/logs': typeof AuthenticatedLogsRoute
@@ -129,6 +145,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
   '/api/public/google-drive/changes': typeof ApiPublicGoogleDriveChangesRoute
   '/api/public/meta/callback': typeof ApiPublicMetaCallbackRoute
+  '/api/public/webhooks/crm/$token': typeof ApiPublicWebhooksCrmTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -137,6 +154,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/crm': typeof AuthenticatedCrmRoute
   '/_authenticated/integracoes': typeof AuthenticatedIntegracoesRoute
   '/_authenticated/investimentos': typeof AuthenticatedInvestimentosRoute
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
@@ -146,6 +164,7 @@ export interface FileRoutesById {
   '/api/public/cron/sync-portais': typeof ApiPublicCronSyncPortaisRoute
   '/api/public/google-drive/changes': typeof ApiPublicGoogleDriveChangesRoute
   '/api/public/meta/callback': typeof ApiPublicMetaCallbackRoute
+  '/api/public/webhooks/crm/$token': typeof ApiPublicWebhooksCrmTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -154,6 +173,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/clientes'
     | '/configuracoes'
+    | '/crm'
     | '/integracoes'
     | '/investimentos'
     | '/logs'
@@ -163,12 +183,14 @@ export interface FileRouteTypes {
     | '/api/public/cron/sync-portais'
     | '/api/public/google-drive/changes'
     | '/api/public/meta/callback'
+    | '/api/public/webhooks/crm/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/clientes'
     | '/configuracoes'
+    | '/crm'
     | '/integracoes'
     | '/investimentos'
     | '/logs'
@@ -178,6 +200,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/sync-portais'
     | '/api/public/google-drive/changes'
     | '/api/public/meta/callback'
+    | '/api/public/webhooks/crm/$token'
   id:
     | '__root__'
     | '/'
@@ -185,6 +208,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/clientes'
     | '/_authenticated/configuracoes'
+    | '/_authenticated/crm'
     | '/_authenticated/integracoes'
     | '/_authenticated/investimentos'
     | '/_authenticated/logs'
@@ -194,6 +218,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/sync-portais'
     | '/api/public/google-drive/changes'
     | '/api/public/meta/callback'
+    | '/api/public/webhooks/crm/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -205,6 +230,7 @@ export interface RootRouteChildren {
   ApiPublicCronSyncPortaisRoute: typeof ApiPublicCronSyncPortaisRoute
   ApiPublicGoogleDriveChangesRoute: typeof ApiPublicGoogleDriveChangesRoute
   ApiPublicMetaCallbackRoute: typeof ApiPublicMetaCallbackRoute
+  ApiPublicWebhooksCrmTokenRoute: typeof ApiPublicWebhooksCrmTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -242,6 +268,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/configuracoes'
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/crm': {
+      id: '/_authenticated/crm'
+      path: '/crm'
+      fullPath: '/crm'
+      preLoaderRoute: typeof AuthenticatedCrmRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/integracoes': {
@@ -307,12 +340,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMetaCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/crm/$token': {
+      id: '/api/public/webhooks/crm/$token'
+      path: '/api/public/webhooks/crm/$token'
+      fullPath: '/api/public/webhooks/crm/$token'
+      preLoaderRoute: typeof ApiPublicWebhooksCrmTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedCrmRoute: typeof AuthenticatedCrmRoute
   AuthenticatedIntegracoesRoute: typeof AuthenticatedIntegracoesRoute
   AuthenticatedInvestimentosRoute: typeof AuthenticatedInvestimentosRoute
   AuthenticatedLogsRoute: typeof AuthenticatedLogsRoute
@@ -322,6 +363,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
+  AuthenticatedCrmRoute: AuthenticatedCrmRoute,
   AuthenticatedIntegracoesRoute: AuthenticatedIntegracoesRoute,
   AuthenticatedInvestimentosRoute: AuthenticatedInvestimentosRoute,
   AuthenticatedLogsRoute: AuthenticatedLogsRoute,
@@ -340,6 +382,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronSyncPortaisRoute: ApiPublicCronSyncPortaisRoute,
   ApiPublicGoogleDriveChangesRoute: ApiPublicGoogleDriveChangesRoute,
   ApiPublicMetaCallbackRoute: ApiPublicMetaCallbackRoute,
+  ApiPublicWebhooksCrmTokenRoute: ApiPublicWebhooksCrmTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -139,6 +139,113 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_leads: {
+        Row: {
+          atualizado_em: string
+          campanha: string | null
+          cliente_id: string | null
+          email: string | null
+          etapa: string | null
+          external_id: string | null
+          id: string
+          nome: string | null
+          origem: string | null
+          payload: Json
+          recebido_em: string
+          telefone: string | null
+          valor: number | null
+          webhook_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          campanha?: string | null
+          cliente_id?: string | null
+          email?: string | null
+          etapa?: string | null
+          external_id?: string | null
+          id?: string
+          nome?: string | null
+          origem?: string | null
+          payload: Json
+          recebido_em?: string
+          telefone?: string | null
+          valor?: number | null
+          webhook_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          campanha?: string | null
+          cliente_id?: string | null
+          email?: string | null
+          etapa?: string | null
+          external_id?: string | null
+          id?: string
+          nome?: string | null
+          origem?: string | null
+          payload?: Json
+          recebido_em?: string
+          telefone?: string | null
+          valor?: number | null
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_leads_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "crm_webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_webhooks: {
+        Row: {
+          ativo: boolean
+          cliente_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          nome: string
+          token: string
+          ultimo_recebimento: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome: string
+          token?: string
+          ultimo_recebimento?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome?: string
+          token?: string
+          ultimo_recebimento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_webhooks_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hunter_users: {
         Row: {
           hunter: string

@@ -75,6 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       { to: "/integracoes", label: "Integrações" },
       { to: "/configuracoes", label: "Configurações" },
       { to: "/logs", label: "Sincronizações" },
+      { to: "/crm", label: "CRM" },
     ] : []),
   ] as const;
 

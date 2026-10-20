@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Aba CRM (teste) com webhook de recebimento de leads (nome, telefone, campanha, origem, etapa) e cards por período; 33 testes aprovados, build e tipos sem erros.
 - [x] Tela Integrações com fluxo OAuth nativo da Meta (App ID, App Secret, URL de redirecionamento, conexão e vínculo de contas aos doutores).
 - [x] Importar investimento e conversas da Meta das 7 contas vinculadas (843 dias), com leitura automática a cada 15 minutos e botão Importar agora.
 - [x] Separar Comissão Hunter prevista abaixo da comissão prevista total, com percentual configurado; 19 testes aprovados e painel sem erros de compilação.

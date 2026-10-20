@@ -64,6 +64,13 @@
       "when": 1792500090839,
       "tag": "0008_investimento_meta_import",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792900000000,
+      "tag": "0009_crm_webhook",
+      "breakpoints": true
     }
   ]
 }

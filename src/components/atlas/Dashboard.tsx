@@ -43,7 +43,7 @@ export function StatusBadge({ s }: { s: string | null }) {
 
 type Audit = { title: string; rows: Venda[] } | null;
 
-function Section({ title, tone, children, className }: { title: string; tone?: Tone; children: ReactNode; className?: string }) {
+export function Section({ title, tone, children, className }: { title: string; tone?: Tone; children: ReactNode; className?: string }) {
   return (
     <section className={cn("report-section space-y-3", className)}>
       <h2 className={cn("text-xs font-bold uppercase tracking-[0.14em]", tone ? TONE[tone].title : "text-muted-foreground")}>{title}</h2>
@@ -52,7 +52,7 @@ function Section({ title, tone, children, className }: { title: string; tone?: T
   );
 }
 
-function Card({ label, value, hint, icon: Icon, tone, onClick }: { label: string; value: string; hint?: string; icon: typeof Coins; tone: Tone; onClick?: () => void }) {
+export function Card({ label, value, hint, icon: Icon, tone, onClick }: { label: string; value: string; hint?: string; icon: typeof Coins; tone: Tone; onClick?: () => void }) {
   return (
     <button
       type="button"
