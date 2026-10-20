@@ -72,6 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     ...(isAdmin ? [
       { to: "/clientes", label: "Clientes" },
       { to: "/investimentos", label: "Investimentos" },
+      { to: "/integracoes", label: "Integrações" },
       { to: "/configuracoes", label: "Configurações" },
       { to: "/logs", label: "Sincronizações" },
     ] : []),
