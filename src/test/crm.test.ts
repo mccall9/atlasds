@@ -63,15 +63,16 @@ describe("parseCrmGrid (CRM export)", () => {
   it("maps export columns by header name", () => {
     const [a, b] = parseCrmGrid(grid);
     expect(a).toMatchObject({
-      external_id: "8100137", nome: "Bruno Lima", telefone: "5548999074115", valor: 45, produto: "Corte", etapa: "VENDA REALIZADA", situacao: "WON",
+      external_id: "8100137", nome: "Bruno Lima", telefone: "5548999074115", valor: 45, produto: "Corte", etapa: "VENDA REALIZADA", situacao: "GANHO",
       criado_em: "2026-10-04T13:02:05.000Z", ganho_em: "2026-10-10T15:17:05.000Z", movido_em: "2026-10-10T15:17:05.000Z",
     });
-    expect(b).toMatchObject({ external_id: "8100000", etapa: "NOVO CONTATO", situacao: "OPEN", valor: null, produto: null });
+    expect(b).toMatchObject({ external_id: "8100000", etapa: "NOVO CONTATO", situacao: "ABERTO", valor: null, produto: null });
     expect(parseCrmGrid(grid)).toHaveLength(2);
   });
 
   it("parses Brazilian dates at noon in São Paulo", () => {
     expect(parseWhen("05/10/2026")).toBe("2026-10-05T15:00:00.000Z");
+    expect(parseWhen("11/09/2026 09:25:41")).toBe("2026-09-11T12:25:41.000Z");
     expect(parseWhen("")).toBeNull();
   });
 
@@ -94,5 +95,15 @@ describe("campaign and ad set columns", () => {
     const [r] = parseCrmGrid([["ID", "Contact Name", "Campanha", "Conjunto", "Criativo"], ["1", "Ana", "ATOS | ENGAJAMENTO", "FLORIANÓPOLIS | 3KM", "VIDEO - ANTES x DEPOIS"]]);
     expect(r).toMatchObject({ campanha: "ATOS | ENGAJAMENTO", conjunto: "FLORIANÓPOLIS | 3KM", criativo: "VIDEO - ANTES x DEPOIS" });
     expect(parseCrmLead({ adset: { name: "Público A" }, campaign: { name: "Camp" }, ad: { name: "Vídeo 1" } })).toMatchObject({ campanha: "Camp", conjunto: "Público A", criativo: "Vídeo 1" });
+  });
+});
+
+describe("Portuguese CRM export", () => {
+  it("reads translated headers and situations", () => {
+    const [r] = parseCrmGrid([
+      ["ID", "Status", "Valor", "Criado em", "Ganho em", "Última Movimentação", "Nome do Contato", "E-mail do Contato", "Telefone do Contato", "Produto/Serviço", "Etapa de Vendas"],
+      ["1", "GANHO", "R$ 45,00", "04/10/2026 10:02", "10/10/2026 12:17", "10/10/2026 12:17", "Bruno Lima", "b@x.com", "(48) 99907-4115", "Corte", "VENDA REALIZADA"],
+    ]);
+    expect(r).toMatchObject({ etapa: "VENDA REALIZADA", situacao: "GANHO", valor: 45, nome: "Bruno Lima", telefone: "(48) 99907-4115", produto: "Corte", criado_em: "2026-10-04T13:02:00.000Z" });
   });
 });

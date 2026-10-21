@@ -40,7 +40,7 @@ const ALIASES: Record<keyof CrmLeadFields, string[]> = {
   criativo: ["criativo", "anuncio", "adname", "creative", "creativename", "nomedocriativo", "utmterm"],
   conjunto: ["conjunto", "conjuntodeanuncios", "adset", "adsetname", "adgroup", "utmcontent", "publico"],
   origem: ["utmsource", "origem", "source", "fonte", "canal", "leadsource", "plataforma", "sourcename", "origemnome"],
-  etapa: ["etapa", "salesstep", "coluna", "stage", "fase", "pipelinestage", "stagename", "etapadofunil", "stagetitle", "etapanome", "colunanome", "fasename", "pipelinestagename", "status", "statusname"],
+  etapa: ["etapa", "etapadevendas", "etapadevenda", "salesstep", "coluna", "stage", "fase", "pipelinestage", "stagename", "etapadofunil", "stagetitle", "etapanome", "colunanome", "fasename", "pipelinestagename", "status", "statusname"],
   valor: ["valor", "amount", "value", "price", "preco", "valordonegocio", "dealvalue", "valorfechado"],
   produto: ["produto", "productservice", "produtoservico", "servico", "product", "service", "procedimento"],
   situacao: ["situacao", "dealstatus", "status"],
@@ -88,13 +88,18 @@ const text = (v: unknown) => {
   return s ? s.slice(0, 500) : null;
 };
 
-// Accepts dd/mm/aaaa (noon in São Paulo, so the day never shifts), ISO and JS date strings.
+// CRM exports name the deal situation in English or Portuguese; the panel keeps the Portuguese one.
+const SITUACAO: Record<string, string> = { open: "ABERTO", aberto: "ABERTO", won: "GANHO", ganho: "GANHO", lost: "PERDIDO", perdido: "PERDIDO" };
+
+// Accepts dd/mm/aaaa [hh:mm[:ss]] (noon in São Paulo, so the day never shifts), ISO and JS date strings.
 export function parseWhen(v: unknown): string | null {
   const s = text(v);
   if (!s) return null;
   if (/^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(s)) {
     const d = parseDate(s);
-    return d ? new Date(`${d}T12:00:00-03:00`).toISOString() : null;
+    const hm = /\s(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(s);
+    const time = hm ? `${hm[1]!.padStart(2, "0")}:${hm[2]}:${hm[3] ?? "00"}` : "12:00:00";
+    return d ? new Date(`${d}T${time}-03:00`).toISOString() : null;
   }
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(`${s}T12:00:00-03:00`).toISOString();
   const t = Date.parse(s.replace(/\s*\(.*\)\s*$/, ""));
@@ -129,7 +134,7 @@ export function parseCrmLead(payload: unknown): CrmLeadFields {
     valor: parseNumber(pick("valor")),
     produto: text(pick("produto")),
     // "Status" is only the deal situation when a separate stage column exists.
-    situacao: situacao && situacao !== etapa ? situacao.toUpperCase() : null,
+    situacao: situacao && situacao !== etapa ? (SITUACAO[norm(situacao)] ?? situacao.toUpperCase()) : null,
     criado_em: parseWhen(pick("criado_em")),
     movido_em: parseWhen(pick("movido_em")),
     ganho_em: parseWhen(pick("ganho_em")),
@@ -181,8 +186,8 @@ export function crmDay(iso: string) {
 
 // Lead date: when the CRM created the deal, or when it reached the panel.
 export const dataLead = (r: CrmLead) => r.criado_em ?? r.recebido_em;
-export const isVenda = (r: CrmLead) => r.situacao === "WON" || norm(r.etapa).includes("venda realizada");
-export const isPerdido = (r: CrmLead) => r.situacao === "LOST" || norm(r.etapa).startsWith("perdid");
+export const isVenda = (r: CrmLead) => r.situacao === "GANHO" || norm(r.etapa).includes("venda realizada");
+export const isPerdido = (r: CrmLead) => r.situacao === "PERDIDO" || norm(r.etapa).startsWith("perdid");
 // Sale date: won date, else when the card moved into its current stage.
 export const dataVenda = (r: CrmLead) => r.ganho_em ?? r.movido_em ?? dataLead(r);
 
