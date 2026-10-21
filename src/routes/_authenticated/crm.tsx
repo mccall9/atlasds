@@ -100,6 +100,11 @@ function Crm() {
   const nomeCliente = (id: string | null) => clientes.data?.find((c) => c.id === id)?.nome ?? "—";
   const fonteNome = fonteFiltro === "todos" ? "Todas as fontes" : fontes.data?.find((f) => f.id === fonteFiltro)?.nome ?? "CRM";
   const ultimaLeitura = (fontes.data ?? []).filter((f) => fonteFiltro === "todos" || f.id === fonteFiltro).map((f) => f.ultimo_recebimento).filter(Boolean).sort().at(-1) ?? null;
+  // The sales card takes the client's own name for its sale stage (e.g. "Clientes Atendidos").
+  const etapasVenda = m.etapas.filter((e) => e.papel === "venda" && e.nome !== "Sem etapa");
+  const rotuloVenda = etapasVenda.length === 1 && !/vendas? realizadas?/.test(norm(etapasVenda[0]!.nome))
+    ? etapasVenda[0]!.nome.toLocaleLowerCase("pt-BR").replace(/(^|\s)\p{L}/gu, (c) => c.toLocaleUpperCase("pt-BR"))
+    : "Vendas Realizadas";
   const temCampanha = m.leads.some((r) => r.campanha || r.conjunto || r.criativo || r.origem);
 
   return (
@@ -131,7 +136,7 @@ function Crm() {
         ) : (
           <span className="text-sm font-medium">{fmtDate(range.de)} - {fmtDate(range.ate)}</span>
         )}
-        <span className="text-xs text-muted-foreground">Leads pela data de criação · vendas pela data em que entraram em Venda Realizada</span>
+        <span className="text-xs text-muted-foreground">Leads pela data de criação · {rotuloVenda.toLowerCase()} pela data em que entraram na etapa</span>
         <Button size="sm" className="ml-auto" disabled={!leads.data} onClick={() => void printPanel(fonteNome, range.de, range.ate)}><FileDown className="size-4" />Exportar PDF</Button>
       </div>
 
@@ -148,7 +153,7 @@ function Crm() {
 
           <Section title="Vendas" tone="green">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <Card tone="green" icon={HeartHandshake} label="Vendas Realizadas" value={fmtInt(m.vendas.length)} hint={`${fmtInt(m.vendasComValor.length)} com valor lançado`} onClick={open("Vendas realizadas no período", m.vendas)} />
+              <Card tone="green" icon={HeartHandshake} label={rotuloVenda} value={fmtInt(m.vendas.length)} hint={`${fmtInt(m.vendasComValor.length)} com valor lançado`} onClick={open(`${rotuloVenda} no período`, m.vendas)} />
               <Card tone="green" icon={TrendingUp} label="Faturamento" value={fmtBRL(m.faturamento)} hint="Soma dos valores das vendas" onClick={open("Vendas com valor", m.vendasComValor)} />
               <Card tone="green" icon={Receipt} label="Ticket Médio" value={fmtBRL(m.ticket)} hint="Faturamento ÷ vendas com valor" />
               <Card tone="green" icon={Percent} label="Taxa de Conversão" value={fmtPct(m.taxaConversao)} hint="Novos leads que já viraram venda" />
