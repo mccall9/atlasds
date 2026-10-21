@@ -268,7 +268,7 @@ function LeadRows({ rows, nomeCliente, onPayload }: { rows: CrmLead[]; nomeClien
         {rows.map((r) => (
           <TableRow key={r.id}>
             <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{fmtDateTime(dataLead(r))}</TableCell>
-            <TableCell className="font-medium">{r.nome ?? "—"}</TableCell>
+            <TableCell className="font-medium">{r.nome ?? <span className="text-muted-foreground">Sem nome</span>}</TableCell>
             <TableCell className="whitespace-nowrap tabular-nums" title="Número parcialmente oculto">{maskPhone(r.telefone)}</TableCell>
             <TableCell className="max-w-40 truncate">{r.produto ?? "—"}</TableCell>
             <TableCell className="whitespace-nowrap">{r.etapa ?? "—"}</TableCell>

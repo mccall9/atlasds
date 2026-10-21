@@ -123,7 +123,8 @@ export function parseCrmLead(payload: unknown): CrmLeadFields {
   return {
     // Without a CRM id the phone identifies the contact, so resends update instead of duplicating.
     external_id: id ?? (digits.length >= 8 ? `tel:${digits}` : null),
-    nome: text(pick("nome")),
+    // Some CRMs copy the phone into the name when the contact has none.
+    nome: /\p{L}/u.test(text(pick("nome")) ?? "") ? text(pick("nome")) : null,
     telefone,
     email: text(pick("email"))?.toLowerCase() ?? null,
     campanha: text(pick("campanha")),
@@ -142,7 +143,9 @@ export function parseCrmLead(payload: unknown): CrmLeadFields {
 }
 
 // Turns a sheet grid (header row first) into one lead per non-empty row.
-export function parseCrmGrid(grid: string[][]): (CrmLeadFields & { payload: Record<string, string> })[] {
+export function parseCrmGrid(input: string[][]): (CrmLeadFields & { payload: Record<string, string> })[] {
+  // A semicolon CSV opened without splitting lands in a single column.
+  const grid = input[0]?.length === 1 && String(input[0][0]).includes(";") ? input.map((r) => String(r[0] ?? "").split(";")) : input;
   const [head = [], ...rows] = grid;
   const seen = new Set<string>();
   const out: (CrmLeadFields & { payload: Record<string, string> })[] = [];
@@ -186,7 +189,7 @@ export function crmDay(iso: string) {
 
 // Lead date: when the CRM created the deal, or when it reached the panel.
 export const dataLead = (r: CrmLead) => r.criado_em ?? r.recebido_em;
-export const isVenda = (r: CrmLead) => r.situacao === "GANHO" || norm(r.etapa).includes("venda realizada");
+export const isVenda = (r: CrmLead) => r.situacao === "GANHO" || /vendas? realizadas?/.test(norm(r.etapa));
 export const isPerdido = (r: CrmLead) => r.situacao === "PERDIDO" || norm(r.etapa).startsWith("perdid");
 // Sale date: won date, else when the card moved into its current stage.
 export const dataVenda = (r: CrmLead) => r.ganho_em ?? r.movido_em ?? dataLead(r);

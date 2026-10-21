@@ -107,3 +107,23 @@ describe("Portuguese CRM export", () => {
     expect(r).toMatchObject({ etapa: "VENDA REALIZADA", situacao: "GANHO", valor: 45, nome: "Bruno Lima", telefone: "(48) 99907-4115", produto: "Corte", criado_em: "2026-10-04T13:02:00.000Z" });
   });
 });
+
+describe("raw CRM export (semicolon CSV)", () => {
+  // Same layout as the CRM download, with fictional values.
+  const csv = [
+    "ID;Status;Amount;Created At;Last Updated;Won At;Last Moved;Contact Name;Contact E-mail;Contact Phone;Product/Service;Sales Step",
+    "9000001;OPEN;100.00;Wed Oct 21 2026 12:49:26 GMT+0000 (Coordinated Universal Time);Wed Oct 21 2026 12:49:26 GMT+0000 (Coordinated Universal Time);;Wed Oct 21 2026 12:49:26 GMT+0000 (Coordinated Universal Time);Ana Teste;;5548999990001;HIDRATAÇÃO;VENDAS REALIZADAS",
+    "9000002;OPEN;30.00;Wed Oct 21 2026 12:49:06 GMT+0000 (Coordinated Universal Time);Wed Oct 21 2026 12:49:06 GMT+0000 (Coordinated Universal Time);;Wed Oct 21 2026 12:49:06 GMT+0000 (Coordinated Universal Time);5548999990002;;5548999990002;SOBRANCELHA ;VENDAS REALIZADAS",
+  ];
+
+  it("splits a single-column grid and counts plural Vendas Realizadas", () => {
+    const leads = parseCrmGrid(csv.map((l) => [l])).map((l, i) => ({ ...l, id: String(i), webhook_id: "w", cliente_id: null, recebido_em: "2026-10-21T13:00:00Z", atualizado_em: "" }));
+    expect(leads).toHaveLength(2);
+    expect(leads[0]).toMatchObject({ nome: "Ana Teste", valor: 100, produto: "HIDRATAÇÃO", etapa: "VENDAS REALIZADAS", situacao: "ABERTO" });
+    expect(leads[1]).toMatchObject({ nome: null, telefone: "5548999990002", produto: "SOBRANCELHA", valor: 30 });
+    const m = computeCrmMetrics(leads, "2026-10-01", "2026-10-31", "2026-10-21");
+    expect(m.vendas).toHaveLength(2);
+    expect(m.faturamento).toBe(130);
+    expect(m.hoje).toHaveLength(2);
+  });
+});
