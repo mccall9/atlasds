@@ -238,6 +238,7 @@ export type Database = {
           id: string
           nome: string
           spreadsheet_id: string | null
+          tipo: string | null
           token: string
           ultimo_erro: string | null
           ultimo_recebimento: string | null
@@ -253,6 +254,7 @@ export type Database = {
           id?: string
           nome: string
           spreadsheet_id?: string | null
+          tipo?: string | null
           token?: string
           ultimo_erro?: string | null
           ultimo_recebimento?: string | null
@@ -268,6 +270,7 @@ export type Database = {
           id?: string
           nome?: string
           spreadsheet_id?: string | null
+          tipo?: string | null
           token?: string
           ultimo_erro?: string | null
           ultimo_recebimento?: string | null

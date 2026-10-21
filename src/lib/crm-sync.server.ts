@@ -19,6 +19,31 @@ async function ordemEtapas(spreadsheetId: string, tab: string, head: unknown[]):
   return etapas.length ? etapas : null;
 }
 
+// Replaces every lead of the source with the given export, so a new export never duplicates deals.
+async function espelhar(f: { id: string; cliente_id: string | null }, leads: ReturnType<typeof parseCrmGrid>, etapas: string[] | null) {
+  const db = supabaseAdmin as any;
+  const now = new Date().toISOString();
+  const rows = leads.map((l) => ({ ...l, webhook_id: f.id, cliente_id: f.cliente_id, atualizado_em: now }));
+  const { error: de } = await db.from("crm_leads").delete().eq("webhook_id", f.id);
+  if (de) throw new Error(de.message);
+  for (let i = 0; i < rows.length; i += 500) {
+    const { error } = await db.from("crm_leads").upsert(rows.slice(i, i + 500), { onConflict: "webhook_id,external_id" });
+    if (error) throw new Error(error.message);
+  }
+  await db.from("crm_webhooks").update({ ultimo_recebimento: now, ultimo_erro: null, ...(etapas ? { etapas } : {}) }).eq("id", f.id);
+  return rows.length;
+}
+
+// An uploaded CRM export (CSV parsed in the browser) for a file source.
+export async function importarArquivo(id: string, grid: string[][]) {
+  const db = supabaseAdmin as any;
+  const { data: f } = await db.from("crm_webhooks").select("id, cliente_id, tipo").eq("id", id).maybeSingle();
+  if (!f || f.tipo !== "arquivo") return { ok: false as const, erro: "Fonte de arquivo não encontrada" };
+  const leads = parseCrmGrid(grid);
+  if (!leads.length) return { ok: false as const, erro: "Nenhuma linha com nome, telefone ou e-mail. Confira se é a exportação do CRM." };
+  return { ok: true as const, linhas: await espelhar(f, leads, null) };
+}
+
 // Read-only mirror of a CRM export sheet: the source's rows are replaced on every read.
 export async function syncCrmPlanilha(f: Fonte) {
   const db = supabaseAdmin as any;
@@ -31,16 +56,8 @@ export async function syncCrmPlanilha(f: Fonte) {
     const leads = parseCrmGrid(data.values ?? []);
     if (!leads.length) throw new Error("Nenhuma linha com nome, telefone ou e-mail");
     const etapas = await ordemEtapas(f.spreadsheet_id, tab, data.values?.[0] ?? []);
-    const now = new Date().toISOString();
-    const rows = leads.map((l) => ({ ...l, webhook_id: f.id, cliente_id: f.cliente_id, atualizado_em: now }));
-    const { error: de } = await db.from("crm_leads").delete().eq("webhook_id", f.id);
-    if (de) throw new Error(de.message);
-    for (let i = 0; i < rows.length; i += 500) {
-      const { error } = await db.from("crm_leads").upsert(rows.slice(i, i + 500), { onConflict: "webhook_id,external_id" });
-      if (error) throw new Error(error.message);
-    }
-    await db.from("crm_webhooks").update({ ultimo_recebimento: now, ultimo_erro: null, ...(etapas ? { etapas } : {}) }).eq("id", f.id);
-    return { ok: true, linhas: rows.length };
+    const linhas = await espelhar(f, leads, etapas);
+    return { ok: true, linhas };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`[crm] planilha ${f.nome}:`, msg);

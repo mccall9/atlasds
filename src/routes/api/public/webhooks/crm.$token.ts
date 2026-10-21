@@ -18,9 +18,9 @@ async function readBody(request: Request): Promise<unknown> {
 async function findWebhook(token: string) {
   if (!/^[a-f0-9]{64}$/.test(token)) return null;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin.from("crm_webhooks").select("id, cliente_id, ativo, spreadsheet_id").eq("token", token).maybeSingle();
-  // Sheet sources are mirrored by the scheduled sync and never accept pushed leads.
-  return data?.ativo && !data.spreadsheet_id ? { db: supabaseAdmin, hook: data } : null;
+  const { data } = await supabaseAdmin.from("crm_webhooks").select("id, cliente_id, ativo, spreadsheet_id, tipo").eq("token", token).maybeSingle();
+  // Sheet and file sources are replaced by their imports and never accept pushed leads.
+  return data?.ativo && !data.spreadsheet_id && data.tipo !== "arquivo" ? { db: supabaseAdmin, hook: data } : null;
 }
 
 export const Route = createFileRoute("/api/public/webhooks/crm/$token")({

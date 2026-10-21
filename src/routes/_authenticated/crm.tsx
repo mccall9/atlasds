@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  CalendarClock, Clapperboard, Copy, ExternalLink, FileDown, HeartHandshake, Layers, Megaphone, Percent, Plus, Receipt, RefreshCw, Scissors,
+  CalendarClock, Clapperboard, Copy, ExternalLink, FileDown, FileUp, HeartHandshake, Layers, Megaphone, Percent, Plus, Receipt, RefreshCw, Scissors,
   Sheet, Target, Trash2, TrendingUp, UserX, Users, Waypoints, Webhook,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +19,8 @@ import { AdminOnly, useConfig } from "@/components/atlas/AppShell";
 import { PanelTitle, PrintFooter } from "@/components/atlas/PanelHeader";
 import { Card, Section } from "@/components/atlas/Dashboard";
 import { computeCrmMetrics, dataLead, isVenda, maskPhone, papelEtapa, type CrmLead, type Papel, type Regras } from "@/lib/crm";
-import { syncCrmNow } from "@/lib/crm.functions";
+import { importCrmArquivo, syncCrmNow } from "@/lib/crm.functions";
+import { readCsvFile } from "@/lib/csv";
 import { printPanel } from "@/lib/print-panel";
 import { extractSpreadsheetId, norm } from "@/lib/parse";
 import { csvDownload, fmtBRL, fmtDate, fmtDateTime, fmtInt, fmtPct, presetRange, type Preset } from "@/lib/format";
@@ -307,15 +308,19 @@ function LeadRows({ rows, nomeCliente, onPayload }: { rows: CrmLead[]; nomeClien
   );
 }
 
-type Fonte = { id: string; nome: string; token: string; cliente_id: string | null; ativo: boolean; ultimo_recebimento: string | null; spreadsheet_id: string | null; aba: string | null; ultimo_erro: string | null; etapas: string[] | null; etapas_papeis: unknown };
+type Fonte = { id: string; nome: string; token: string; cliente_id: string | null; ativo: boolean; ultimo_recebimento: string | null; spreadsheet_id: string | null; aba: string | null; ultimo_erro: string | null; etapas: string[] | null; etapas_papeis: unknown; tipo: string | null };
+type Tipo = "arquivo" | "planilha" | "webhook";
+const tipoDe = (f: Fonte): Tipo => (f.tipo === "arquivo" ? "arquivo" : f.spreadsheet_id ? "planilha" : "webhook");
 
 function Fontes({ fontes, loading, clientes, etapasPorFonte, onChange }: { fontes: Fonte[] | undefined; loading: boolean; clientes: { id: string; nome: string }[]; etapasPorFonte: Record<string, string[]>; onChange: () => void }) {
   const [editando, setEditando] = useState<Fonte | null>(null);
   const syncFn = useServerFn(syncCrmNow);
-  const [tipo, setTipo] = useState<"planilha" | "webhook">("planilha");
+  const importFn = useServerFn(importCrmArquivo);
+  const [tipo, setTipo] = useState<Tipo>("arquivo");
   const [nome, setNome] = useState("");
   const [url, setUrl] = useState("");
   const [aba, setAba] = useState("");
+  const [arquivo, setArquivo] = useState<File | null>(null);
   const [cliente, setCliente] = useState(NONE);
   const [salvando, setSalvando] = useState(false);
   const [lendo, setLendo] = useState<string | null>(null);
@@ -335,20 +340,42 @@ function Fontes({ fontes, loading, clientes, etapasPorFonte, onChange }: { fonte
     }
   };
 
+  // The file is parsed here and only its rows go to the server, which replaces the source's previous import.
+  const importar = async (id: string, file: File) => {
+    if (!/\.(csv|txt)$/i.test(file.name)) { toast.error("Envie o arquivo .csv exportado do CRM"); return; }
+    if (file.size > 8 * 1024 * 1024) { toast.error("Arquivo muito grande (máximo 8 MB)"); return; }
+    setLendo(id);
+    try {
+      const grid = await readCsvFile(file);
+      if (grid.length < 2) { toast.error("O arquivo não tem linhas de negócios"); return; }
+      const r = await importFn({ data: { id, grid: grid.map((row) => row.slice(0, 100).map((c) => c.slice(0, 2000))) } });
+      if (r.ok) toast.success(`Arquivo importado: ${r.linhas} negócio(s)`);
+      else toast.error(r.erro);
+    } catch {
+      toast.error("Não foi possível importar o arquivo. Confira se é o CSV exportado do CRM.");
+    } finally {
+      setLendo(null);
+      onChange();
+    }
+  };
+
   const criar = async () => {
     if (!nome.trim()) { toast.error("Dê um nome à fonte"); return; }
     const spreadsheetId = tipo === "planilha" ? extractSpreadsheetId(url) : null;
     if (tipo === "planilha" && !spreadsheetId) { toast.error("Cole o link da planilha do Google"); return; }
+    if (tipo === "arquivo" && !arquivo) { toast.error("Escolha o arquivo exportado do CRM"); return; }
     setSalvando(true);
     const { data: u } = await supabase.auth.getUser();
     const { data, error } = await supabase.from("crm_webhooks").insert({
       nome: nome.trim(), cliente_id: cliente === NONE ? null : cliente, created_by: u.user?.id ?? null,
-      spreadsheet_id: spreadsheetId, aba: tipo === "planilha" && aba.trim() ? aba.trim() : null,
+      spreadsheet_id: spreadsheetId, aba: tipo === "planilha" && aba.trim() ? aba.trim() : null, tipo: tipo === "arquivo" ? "arquivo" : null,
     }).select("id").single();
     setSalvando(false);
     if (error) { toast.error("Não foi possível criar a fonte"); return; }
-    setNome(""); setUrl(""); setAba(""); setCliente(NONE); onChange();
-    if (tipo === "planilha") { toast.success("Planilha cadastrada. Lendo agora…"); await ler(data.id); }
+    const file = arquivo;
+    setNome(""); setUrl(""); setAba(""); setArquivo(null); setCliente(NONE); onChange();
+    if (tipo === "arquivo" && file) await importar(data.id, file);
+    else if (tipo === "planilha") { toast.success("Planilha cadastrada. Lendo agora…"); await ler(data.id); }
     else toast.success("Webhook criado. Copie o endereço e cole no CRM.");
   };
   const atualizar = async (id: string, patch: { ativo?: boolean; cliente_id?: string | null }) => {
@@ -366,16 +393,27 @@ function Fontes({ fontes, loading, clientes, etapasPorFonte, onChange }: { fonte
       <div>
         <h2 className="text-sm font-semibold">Fontes de dados</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          <strong className="text-foreground">Planilha:</strong> cole a exportação do CRM numa planilha do Google compartilhada com a conta dos Portais; o painel só lê, a cada 15 minutos.{" "}
+          <strong className="text-foreground">Arquivo:</strong> importe o .csv exportado do CRM; cada nova importação substitui a anterior.{" "}
+          <strong className="text-foreground">Planilha:</strong> link de uma planilha do Google com a exportação, lida a cada 15 minutos.{" "}
           <strong className="text-foreground">Webhook:</strong> endereço para um sistema enviar leads (HTTP POST, JSON); não compartilhe fora da equipe.
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Select value={tipo} onValueChange={(v) => setTipo(v as "planilha" | "webhook")}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="planilha">Planilha</SelectItem><SelectItem value="webhook">Webhook</SelectItem></SelectContent>
+        <Select value={tipo} onValueChange={(v) => setTipo(v as Tipo)}>
+          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="arquivo">Importar arquivo</SelectItem>
+            <SelectItem value="planilha">Planilha Google</SelectItem>
+            <SelectItem value="webhook">Webhook</SelectItem>
+          </SelectContent>
         </Select>
         <Input className="w-56" placeholder="Nome (ex.: Barbearia · CRM)" value={nome} onChange={(e) => setNome(e.target.value)} />
+        {tipo === "arquivo" && (
+          <label className="flex h-9 w-72 cursor-pointer items-center gap-2 truncate rounded-md border border-dashed bg-background px-3 text-sm text-muted-foreground hover:bg-muted">
+            <FileUp className="size-4 shrink-0" /><span className="truncate">{arquivo ? arquivo.name : "Escolher .csv do CRM"}</span>
+            <input type="file" accept=".csv,text/csv,.txt" className="hidden" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} />
+          </label>
+        )}
         {tipo === "planilha" && (
           <>
             <Input className="w-72" placeholder="https://docs.google.com/spreadsheets/d/…" value={url} onChange={(e) => setUrl(e.target.value)} />
@@ -389,43 +427,53 @@ function Fontes({ fontes, loading, clientes, etapasPorFonte, onChange }: { fonte
             {clientes.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button onClick={criar} disabled={salvando}><Plus className="size-4" />Adicionar</Button>
+        <Button onClick={criar} disabled={salvando || !!lendo}><Plus className="size-4" />Adicionar</Button>
       </div>
       {loading ? <Skeleton className="h-16 w-full" /> : !fontes?.length ? (
         <p className="text-sm text-muted-foreground">Nenhuma fonte cadastrada ainda.</p>
       ) : (
         <div className="space-y-2">
-          {fontes.map((h) => (
-            <div key={h.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-muted p-3">
-              {h.spreadsheet_id ? <Sheet className="size-4 shrink-0 text-g-green" /> : <Webhook className="size-4 shrink-0 text-g-purple" />}
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-medium text-foreground">
-                  {h.nome} · {h.spreadsheet_id ? `planilha${h.aba ? ` (${h.aba})` : ""} · última leitura` : "webhook · último lead"}: {h.ultimo_recebimento ? fmtDateTime(h.ultimo_recebimento) : "nenhum ainda"}
+          {fontes.map((h) => {
+            const t = tipoDe(h);
+            return (
+              <div key={h.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-muted p-3">
+                {t === "arquivo" ? <FileUp className="size-4 shrink-0 text-g-blue" /> : t === "planilha" ? <Sheet className="size-4 shrink-0 text-g-green" /> : <Webhook className="size-4 shrink-0 text-g-purple" />}
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-medium text-foreground">
+                    {h.nome} · {t === "arquivo" ? "arquivo · última importação" : t === "planilha" ? `planilha${h.aba ? ` (${h.aba})` : ""} · última leitura` : "webhook · último lead"}: {h.ultimo_recebimento ? fmtDateTime(h.ultimo_recebimento) : "nenhum ainda"}
+                  </div>
+                  {t === "planilha" && h.spreadsheet_id ? (
+                    <a className="inline-flex items-center gap-1 truncate text-xs text-muted-foreground underline" href={sheetUrl(h.spreadsheet_id)} target="_blank" rel="noreferrer">Abrir planilha<ExternalLink className="size-3" /></a>
+                  ) : t === "webhook" ? (
+                    <code className="block truncate text-xs text-muted-foreground">{webhookUrl(h.token)}</code>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Exporte do CRM e clique em Importar para atualizar.</span>
+                  )}
+                  {h.ultimo_erro && <p className="mt-1 text-xs text-g-red">{h.ultimo_erro}</p>}
                 </div>
-                {h.spreadsheet_id ? (
-                  <a className="inline-flex items-center gap-1 truncate text-xs text-muted-foreground underline" href={sheetUrl(h.spreadsheet_id)} target="_blank" rel="noreferrer">Abrir planilha<ExternalLink className="size-3" /></a>
+                <Select value={h.cliente_id ?? NONE} onValueChange={(v) => atualizar(h.id, { cliente_id: v === NONE ? null : v })}>
+                  <SelectTrigger className="w-52 bg-card"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>Sem cliente vinculado</SelectItem>
+                    {clientes.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {t !== "arquivo" && <label className="flex items-center gap-2 text-xs"><Switch checked={h.ativo} onCheckedChange={(v) => atualizar(h.id, { ativo: v })} />{h.ativo ? "Ativo" : "Pausado"}</label>}
+                {t === "arquivo" ? (
+                  <label className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border bg-background px-3 text-xs font-medium hover:bg-muted ${lendo === h.id ? "pointer-events-none opacity-50" : ""}`}>
+                    <FileUp className="size-3.5" />{lendo === h.id ? "Importando…" : "Importar"}
+                    <input type="file" accept=".csv,text/csv,.txt" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void importar(h.id, f); }} />
+                  </label>
+                ) : t === "planilha" ? (
+                  <Button size="sm" variant="outline" onClick={() => ler(h.id)} disabled={lendo === h.id || !h.ativo}><RefreshCw className={lendo === h.id ? "size-3.5 animate-spin" : "size-3.5"} />{lendo === h.id ? "Lendo…" : "Ler agora"}</Button>
                 ) : (
-                  <code className="block truncate text-xs text-muted-foreground">{webhookUrl(h.token)}</code>
+                  <Button size="sm" variant="outline" onClick={() => copy(webhookUrl(h.token))}><Copy className="size-3.5" />Copiar</Button>
                 )}
-                {h.ultimo_erro && <p className="mt-1 text-xs text-g-red">{h.ultimo_erro}</p>}
+                <Button size="sm" variant="outline" onClick={() => setEditando(h)}><Waypoints className="size-3.5" />Etapas</Button>
+                <Button size="icon" variant="ghost" title="Excluir" onClick={() => excluir(h)}><Trash2 className="size-4" /></Button>
               </div>
-              <Select value={h.cliente_id ?? NONE} onValueChange={(v) => atualizar(h.id, { cliente_id: v === NONE ? null : v })}>
-                <SelectTrigger className="w-52 bg-card"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NONE}>Sem cliente vinculado</SelectItem>
-                  {clientes.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <label className="flex items-center gap-2 text-xs"><Switch checked={h.ativo} onCheckedChange={(v) => atualizar(h.id, { ativo: v })} />{h.ativo ? "Ativo" : "Pausado"}</label>
-              {h.spreadsheet_id ? (
-                <Button size="sm" variant="outline" onClick={() => ler(h.id)} disabled={lendo === h.id || !h.ativo}><RefreshCw className={lendo === h.id ? "size-3.5 animate-spin" : "size-3.5"} />{lendo === h.id ? "Lendo…" : "Ler agora"}</Button>
-              ) : (
-                <Button size="sm" variant="outline" onClick={() => copy(webhookUrl(h.token))}><Copy className="size-3.5" />Copiar</Button>
-              )}
-              <Button size="sm" variant="outline" onClick={() => setEditando(h)}><Waypoints className="size-3.5" />Etapas</Button>
-              <Button size="icon" variant="ghost" title="Excluir" onClick={() => excluir(h)}><Trash2 className="size-4" /></Button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
       {editando && <EtapasDialog fonte={editando} vistas={etapasPorFonte[editando.id] ?? []} onClose={() => setEditando(null)} onSaved={() => { setEditando(null); onChange(); }} />}
