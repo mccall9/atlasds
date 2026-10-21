@@ -18,10 +18,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AdminOnly, useConfig } from "@/components/atlas/AppShell";
 import { PanelTitle, PrintFooter } from "@/components/atlas/PanelHeader";
 import { Card, Section } from "@/components/atlas/Dashboard";
-import { computeCrmMetrics, dataLead, isVenda, maskPhone, type CrmLead } from "@/lib/crm";
+import { computeCrmMetrics, dataLead, isVenda, maskPhone, papelEtapa, type CrmLead, type Papel, type Regras } from "@/lib/crm";
 import { syncCrmNow } from "@/lib/crm.functions";
 import { printPanel } from "@/lib/print-panel";
-import { extractSpreadsheetId } from "@/lib/parse";
+import { extractSpreadsheetId, norm } from "@/lib/parse";
 import { csvDownload, fmtBRL, fmtDate, fmtDateTime, fmtInt, fmtPct, presetRange, type Preset } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/crm")({
@@ -85,7 +85,16 @@ function Crm() {
   const refresh = () => { qc.invalidateQueries({ queryKey: ["crm-webhooks"] }); qc.invalidateQueries({ queryKey: ["crm-leads"] }); };
 
   const rows = useMemo(() => (leads.data ?? []).filter((r) => fonteFiltro === "todos" || r.webhook_id === fonteFiltro), [leads.data, fonteFiltro]);
-  const m = useMemo(() => computeCrmMetrics(rows, range.de, range.ate), [rows, range.de, range.ate]);
+  const regras = useMemo<Regras>(() => Object.fromEntries((fontes.data ?? [])
+    .filter((f) => fonteFiltro === "todos" || f.id === fonteFiltro)
+    .map((f) => [f.id, { ordem: f.etapas, papeis: f.etapas_papeis as Record<string, Papel> | null }])), [fontes.data, fonteFiltro]);
+  const m = useMemo(() => computeCrmMetrics(rows, range.de, range.ate, undefined, regras), [rows, range.de, range.ate, regras]);
+  const venda = (r: CrmLead) => isVenda(r, regras);
+  const etapasPorFonte = useMemo(() => {
+    const out: Record<string, string[]> = {};
+    for (const r of leads.data ?? []) if (r.etapa && !(out[r.webhook_id] ??= []).some((e) => norm(e) === norm(r.etapa))) out[r.webhook_id]!.push(r.etapa);
+    return out;
+  }, [leads.data]);
   const open = (title: string, rs: CrmLead[]) => () => setAudit({ title, rows: rs });
   const nomeCliente = (id: string | null) => clientes.data?.find((c) => c.id === id)?.nome ?? "—";
   const fonteNome = fonteFiltro === "todos" ? "Todas as fontes" : fontes.data?.find((f) => f.id === fonteFiltro)?.nome ?? "CRM";
@@ -99,7 +108,7 @@ function Crm() {
         subtitle="Teste · leads e vendas do CRM lidos de uma planilha (exportação do CRM) ou recebidos por webhook. Não altera os Portais nem o Painel."
       />
 
-      <div className="no-print"><Fontes fontes={fontes.data} loading={fontes.isLoading} clientes={clientes.data ?? []} onChange={refresh} /></div>
+      <div className="no-print"><Fontes fontes={fontes.data} loading={fontes.isLoading} clientes={clientes.data ?? []} etapasPorFonte={etapasPorFonte} onChange={refresh} /></div>
 
       <div className="no-print sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-2 border-y bg-background/90 px-4 py-3 backdrop-blur md:-mx-8 md:px-8">
         <Select value={fonteFiltro} onValueChange={setFonteFiltro}>
@@ -147,14 +156,29 @@ function Crm() {
             </div>
           </Section>
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <Section title="Funil · etapa atual dos novos leads" tone="orange">
-              <Ranking grupos={m.etapas} total={m.leads.length} icon={Waypoints} onOpen={(g) => setAudit({ title: `Etapa: ${g.nome}`, rows: g.rows })} />
-            </Section>
-            <Section title="Produtos e serviços vendidos" tone="teal">
-              <Ranking grupos={m.produtos} total={m.vendas.length} icon={Scissors} comValor onOpen={(g) => setAudit({ title: `Produto/serviço: ${g.nome}`, rows: g.rows })} />
-            </Section>
-          </div>
+          <Section title="Etapas do CRM · novos leads por etapa atual" tone="orange">
+            {m.etapas.length ? (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-5">
+                {m.etapas.map((e) => (
+                  <Card
+                    key={e.nome}
+                    tone={e.papel === "venda" ? "green" : e.papel === "perda" ? "pink" : "orange"}
+                    icon={e.papel === "venda" ? HeartHandshake : e.papel === "perda" ? UserX : Waypoints}
+                    label={e.nome}
+                    value={fmtInt(e.qtd)}
+                    hint={[`${fmtPct(m.leads.length ? e.qtd / m.leads.length : null)} dos leads`, e.valor ? fmtBRL(e.valor) : null, e.papel === "venda" ? "conta como venda" : e.papel === "perda" ? "conta como perda" : null].filter(Boolean).join(" · ")}
+                    onClick={open(`Etapa: ${e.nome}`, e.rows)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">Nenhum lead no período.</div>
+            )}
+          </Section>
+
+          <Section title="Produtos e serviços vendidos" tone="teal">
+            <Ranking grupos={m.produtos} total={m.vendas.length} icon={Scissors} comValor onOpen={(g) => setAudit({ title: `Produto/serviço: ${g.nome}`, rows: g.rows })} />
+          </Section>
 
           <Section title="Campanhas" tone="purple">
             {temCampanha ? (
@@ -168,15 +192,15 @@ function Crm() {
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                   <div className="space-y-2">
                     <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Por campanha · vendas</h3>
-                    <Ranking grupos={m.campanhas} total={m.leads.length} vendas onOpen={(g) => setAudit({ title: `Campanha: ${g.nome}`, rows: g.rows })} />
+                    <Ranking grupos={m.campanhas} total={m.leads.length} venda={venda} onOpen={(g) => setAudit({ title: `Campanha: ${g.nome}`, rows: g.rows })} />
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Por conjunto · vendas</h3>
-                    <Ranking grupos={m.conjuntos} total={m.leads.length} icon={Layers} vendas onOpen={(g) => setAudit({ title: `Conjunto: ${g.nome}`, rows: g.rows })} />
+                    <Ranking grupos={m.conjuntos} total={m.leads.length} icon={Layers} venda={venda} onOpen={(g) => setAudit({ title: `Conjunto: ${g.nome}`, rows: g.rows })} />
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Por criativo · vendas</h3>
-                    <Ranking grupos={m.criativos} total={m.leads.length} icon={Clapperboard} vendas onOpen={(g) => setAudit({ title: `Criativo: ${g.nome}`, rows: g.rows })} />
+                    <Ranking grupos={m.criativos} total={m.leads.length} icon={Clapperboard} venda={venda} onOpen={(g) => setAudit({ title: `Criativo: ${g.nome}`, rows: g.rows })} />
                   </div>
                 </div>
                 {m.origens.some((o) => o.nome !== "SEM ORIGEM") && (
@@ -226,12 +250,12 @@ function Crm() {
 
 type Grupo = { nome: string; qtd: number; valor: number; rows: CrmLead[] };
 
-function Ranking({ grupos, total, onOpen, icon: Icon = Megaphone, comValor, vendas }: { grupos: Grupo[]; total: number; onOpen: (g: Grupo) => void; icon?: typeof Megaphone; comValor?: boolean; vendas?: boolean }) {
+function Ranking({ grupos, total, onOpen, icon: Icon = Megaphone, comValor, venda }: { grupos: Grupo[]; total: number; onOpen: (g: Grupo) => void; icon?: typeof Megaphone; comValor?: boolean; venda?: (r: CrmLead) => boolean }) {
   if (!grupos.length) return <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">Nenhum registro no período.</div>;
   return (
     <div className="divide-y rounded-2xl border bg-card">
       {grupos.slice(0, 10).map((g) => {
-        const qtdVendas = g.rows.filter(isVenda).length;
+        const qtdVendas = venda ? g.rows.filter(venda).length : 0;
         return (
           <button key={g.nome} type="button" onClick={() => onOpen(g)} className="block w-full space-y-2 px-5 py-3.5 text-left transition hover:bg-muted/50">
             <div className="flex items-start gap-2.5">
@@ -242,7 +266,7 @@ function Ranking({ grupos, total, onOpen, icon: Icon = Megaphone, comValor, vend
             <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${total ? (g.qtd / total) * 100 : 0}%` }} /></div>
             <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
               <span>{fmtPct(total ? g.qtd / total : null)} do total</span>
-              {vendas && <span className="font-medium text-g-green">{fmtInt(qtdVendas)} venda{qtdVendas === 1 ? "" : "s"} · {fmtPct(g.qtd ? qtdVendas / g.qtd : null)} conversão</span>}
+              {venda && <span className="font-medium text-g-green">{fmtInt(qtdVendas)} venda{qtdVendas === 1 ? "" : "s"} · {fmtPct(g.qtd ? qtdVendas / g.qtd : null)} conversão</span>}
               {comValor && <span className="font-medium text-foreground">{fmtBRL(g.valor)}</span>}
             </div>
           </button>
@@ -283,9 +307,10 @@ function LeadRows({ rows, nomeCliente, onPayload }: { rows: CrmLead[]; nomeClien
   );
 }
 
-type Fonte = { id: string; nome: string; token: string; cliente_id: string | null; ativo: boolean; ultimo_recebimento: string | null; spreadsheet_id: string | null; aba: string | null; ultimo_erro: string | null };
+type Fonte = { id: string; nome: string; token: string; cliente_id: string | null; ativo: boolean; ultimo_recebimento: string | null; spreadsheet_id: string | null; aba: string | null; ultimo_erro: string | null; etapas: string[] | null; etapas_papeis: unknown };
 
-function Fontes({ fontes, loading, clientes, onChange }: { fontes: Fonte[] | undefined; loading: boolean; clientes: { id: string; nome: string }[]; onChange: () => void }) {
+function Fontes({ fontes, loading, clientes, etapasPorFonte, onChange }: { fontes: Fonte[] | undefined; loading: boolean; clientes: { id: string; nome: string }[]; etapasPorFonte: Record<string, string[]>; onChange: () => void }) {
+  const [editando, setEditando] = useState<Fonte | null>(null);
   const syncFn = useServerFn(syncCrmNow);
   const [tipo, setTipo] = useState<"planilha" | "webhook">("planilha");
   const [nome, setNome] = useState("");
@@ -397,11 +422,60 @@ function Fontes({ fontes, loading, clientes, onChange }: { fontes: Fonte[] | und
               ) : (
                 <Button size="sm" variant="outline" onClick={() => copy(webhookUrl(h.token))}><Copy className="size-3.5" />Copiar</Button>
               )}
+              <Button size="sm" variant="outline" onClick={() => setEditando(h)}><Waypoints className="size-3.5" />Etapas</Button>
               <Button size="icon" variant="ghost" title="Excluir" onClick={() => excluir(h)}><Trash2 className="size-4" /></Button>
             </div>
           ))}
         </div>
       )}
+      {editando && <EtapasDialog fonte={editando} vistas={etapasPorFonte[editando.id] ?? []} onClose={() => setEditando(null)} onSaved={() => { setEditando(null); onChange(); }} />}
     </div>
+  );
+}
+
+const PAPEIS: { v: Papel; l: string }[] = [
+  { v: "funil", l: "Etapa do funil" },
+  { v: "venda", l: "Conta como venda" },
+  { v: "perda", l: "Conta como perda" },
+];
+
+// Each client names its CRM columns differently; this says which ones are sales and which are losses.
+function EtapasDialog({ fonte, vistas, onClose, onSaved }: { fonte: Fonte; vistas: string[]; onClose: () => void; onSaved: () => void }) {
+  const salvos = (fonte.etapas_papeis ?? {}) as Record<string, Papel>;
+  const lista = [...(fonte.etapas ?? []), ...vistas].filter((e, i, all) => all.findIndex((x) => norm(x) === norm(e)) === i);
+  const [papeis, setPapeis] = useState<Record<string, Papel>>(() => Object.fromEntries(lista.map((e) => [norm(e), papelEtapa(e, { papeis: salvos })])));
+  const [salvando, setSalvando] = useState(false);
+  const salvar = async () => {
+    setSalvando(true);
+    const { error } = await supabase.from("crm_webhooks").update({ etapas_papeis: papeis }).eq("id", fonte.id);
+    setSalvando(false);
+    if (error) { toast.error("Não foi possível salvar as etapas"); return; }
+    toast.success("Etapas salvas");
+    onSaved();
+  };
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader><DialogTitle>Etapas · {fonte.nome}</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">As etapas vêm da planilha (menu da coluna de etapa) e dos negócios lidos. O painel já sugere o papel pelo nome; ajuste se precisar. Vendas entram em Vendas, Faturamento e Ticket; perdas, em Perdidos.</p>
+        {!lista.length ? <p className="text-sm text-muted-foreground">Nenhuma etapa lida ainda. Clique em Ler agora.</p> : (
+          <div className="max-h-[50vh] divide-y overflow-auto rounded-xl border">
+            {lista.map((e) => (
+              <div key={e} className="flex items-center gap-3 px-4 py-2.5">
+                <span className="min-w-0 flex-1 text-sm font-medium">{e}</span>
+                <Select value={papeis[norm(e)] ?? "funil"} onValueChange={(v) => setPapeis({ ...papeis, [norm(e)]: v as Papel })}>
+                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectContent>{PAPEIS.map((p) => <SelectItem key={p.v} value={p.v}>{p.l}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button onClick={salvar} disabled={salvando || !lista.length}>Salvar</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

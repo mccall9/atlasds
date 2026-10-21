@@ -142,6 +142,17 @@ export function parseCrmLead(payload: unknown): CrmLeadFields {
   };
 }
 
+// Index of the header that holds the CRM stage, using the same aliases as parseCrmLead.
+export function colunaEtapa(head: unknown[]): number {
+  const keys = head.map((h) => key(String(h ?? "")));
+  for (const alias of ALIASES.etapa) {
+    if (alias === "status" && keys.some((k) => ALIASES.situacao.includes(k) && k !== "status")) continue;
+    const i = keys.indexOf(alias);
+    if (i >= 0) return i;
+  }
+  return -1;
+}
+
 // Turns a sheet grid (header row first) into one lead per non-empty row.
 export function parseCrmGrid(input: string[][]): (CrmLeadFields & { payload: Record<string, string> })[] {
   // A semicolon CSV opened without splitting lands in a single column.
@@ -171,6 +182,22 @@ export function maskPhone(tel: string | null): string {
   return `${d.slice(0, d.length - 8)}${d.length > 8 ? " " : ""}${d.slice(-8, -6)}•••-${d.slice(-4)}`;
 }
 
+// What a CRM stage means for the metrics. Each client names its columns differently.
+export type Papel = "funil" | "venda" | "perda";
+export type RegraEtapas = { ordem?: string[] | null; papeis?: Record<string, Papel> | null };
+export type Regras = Record<string, RegraEtapas | undefined>;
+
+const VENDA_AUTO = /vendas? realizadas?|clientes? atendid|fechad|ganh|procedimento realizado|concluid|\bpag[oa]s?\b/;
+const PERDA_AUTO = /perdid|sem retorno|desqualific|cancelad|desist/;
+
+// An admin choice for the source wins; otherwise the stage name decides.
+export function papelEtapa(etapa: string | null, regra?: RegraEtapas): Papel {
+  const n = norm(etapa);
+  const escolhido = regra?.papeis?.[n];
+  if (escolhido) return escolhido;
+  return VENDA_AUTO.test(n) ? "venda" : PERDA_AUTO.test(n) ? "perda" : "funil";
+}
+
 type Grupo = { nome: string; qtd: number; valor: number; rows: CrmLead[] };
 const agrupar = (rows: CrmLead[], f: (r: CrmLead) => string | null, vazio: string): Grupo[] => {
   const map = new Map<string, CrmLead[]>();
@@ -189,17 +216,35 @@ export function crmDay(iso: string) {
 
 // Lead date: when the CRM created the deal, or when it reached the panel.
 export const dataLead = (r: CrmLead) => r.criado_em ?? r.recebido_em;
-export const isVenda = (r: CrmLead) => r.situacao === "GANHO" || /vendas? realizadas?/.test(norm(r.etapa));
-export const isPerdido = (r: CrmLead) => r.situacao === "PERDIDO" || norm(r.etapa).startsWith("perdid");
+export const isVenda = (r: CrmLead, regras: Regras = {}) => r.situacao === "GANHO" || papelEtapa(r.etapa, regras[r.webhook_id]) === "venda";
+export const isPerdido = (r: CrmLead, regras: Regras = {}) =>
+  !isVenda(r, regras) && (r.situacao === "PERDIDO" || papelEtapa(r.etapa, regras[r.webhook_id]) === "perda");
+
+export type Etapa = Grupo & { papel: Papel };
+
+// Stages in the order of the sheet's dropdown (every listed one, even when empty), then any others by size.
+function etapasDoFunil(leads: CrmLead[], regras: Regras): Etapa[] {
+  const fontes = [...new Set(leads.map((r) => r.webhook_id))];
+  const ordem: string[] = [];
+  for (const f of Object.keys(regras).length ? Object.keys(regras) : fontes) {
+    for (const e of regras[f]?.ordem ?? []) if (!ordem.some((o) => norm(o) === norm(e))) ordem.push(e);
+  }
+  const grupos = agrupar(leads, (r) => r.etapa, "Sem etapa");
+  const listadas = ordem.map((nome) => grupos.find((g) => norm(g.nome) === norm(nome)) ?? { nome, qtd: 0, valor: 0, rows: [] });
+  const outras = grupos.filter((g) => !ordem.some((o) => norm(o) === norm(g.nome)));
+  const regraDe = (g: Grupo) => regras[g.rows[0]?.webhook_id ?? fontes[0] ?? ""] ?? Object.values(regras)[0];
+  return [...listadas, ...outras].map((g) => ({ ...g, papel: papelEtapa(g.nome === "Sem etapa" ? null : g.nome, regraDe(g)) }));
+}
 // Sale date: won date, else when the card moved into its current stage.
 export const dataVenda = (r: CrmLead) => r.ganho_em ?? r.movido_em ?? dataLead(r);
 
-export function computeCrmMetrics(all: CrmLead[], de: string, ate: string, hoje = crmDay(new Date().toISOString())) {
+export function computeCrmMetrics(all: CrmLead[], de: string, ate: string, hoje = crmDay(new Date().toISOString()), regras: Regras = {}) {
   const inRange = (iso: string) => { const d = crmDay(iso); return d >= de && d <= ate; };
+  const venda = (r: CrmLead) => isVenda(r, regras);
   const leads = all.filter((r) => inRange(dataLead(r)));
-  const vendas = all.filter((r) => isVenda(r) && inRange(dataVenda(r)));
+  const vendas = all.filter((r) => venda(r) && inRange(dataVenda(r)));
   const vendasComValor = vendas.filter((r) => r.valor != null);
-  const perdidos = leads.filter(isPerdido);
+  const perdidos = leads.filter((r) => isPerdido(r, regras));
   const comTelefone = leads.filter((r) => r.telefone);
   const comCampanha = leads.filter((r) => r.campanha);
   const dias = new Set(leads.map((r) => crmDay(dataLead(r)))).size;
@@ -217,11 +262,11 @@ export function computeCrmMetrics(all: CrmLead[], de: string, ate: string, hoje 
     conjuntos: agrupar(leads, (r) => r.conjunto, "Sem conjunto"),
     criativos: agrupar(leads, (r) => r.criativo, "Sem criativo"),
     origens: agrupar(leads, (r) => r.origem, "SEM ORIGEM"),
-    etapas: agrupar(leads, (r) => r.etapa, "Sem etapa"),
+    etapas: etapasDoFunil(leads, regras),
     produtos: agrupar(vendas, (r) => r.produto, "Sem produto/serviço"),
     taxaTelefone: leads.length ? comTelefone.length / leads.length : null,
     taxaCampanha: leads.length ? comCampanha.length / leads.length : null,
-    taxaConversao: leads.length ? leads.filter(isVenda).length / leads.length : null,
+    taxaConversao: leads.length ? leads.filter(venda).length / leads.length : null,
     mediaDia: dias ? leads.length / dias : null,
     faturamento,
     ticket: faturamento != null ? faturamento / vendasComValor.length : null,

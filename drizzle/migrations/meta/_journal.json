@@ -92,6 +92,13 @@
       "when": 1792903000000,
       "tag": "0012_crm_criativo",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792980000000,
+      "tag": "0013_crm_etapas",
+      "breakpoints": true
     }
   ]
 }

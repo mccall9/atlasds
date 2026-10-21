@@ -1,11 +1,23 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { gget } from "./sync.server";
 import { norm } from "./parse";
-import { parseCrmGrid } from "./crm";
+import { colunaEtapa, parseCrmGrid } from "./crm";
 
 const q = (t: string) => `'${t.replace(/'/g, "''")}'`;
+const letra = (i: number): string => (i >= 26 ? letra(Math.floor(i / 26) - 1) : "") + String.fromCharCode(65 + (i % 26));
 
 type Fonte = { id: string; nome: string; cliente_id: string | null; spreadsheet_id: string; aba: string | null };
+
+// The stage column's dropdown lists the CRM columns in funnel order; exports without one keep the last known order.
+async function ordemEtapas(spreadsheetId: string, tab: string, head: unknown[]): Promise<string[] | null> {
+  const col = colunaEtapa(head);
+  if (col < 0) return null;
+  const range = encodeURIComponent(`${q(tab)}!${letra(col)}2`);
+  const meta = await gget(`/spreadsheets/${spreadsheetId}?ranges=${range}&fields=${encodeURIComponent("sheets.data.rowData.values.dataValidation")}`).catch(() => null);
+  const values = meta?.sheets?.[0]?.data?.[0]?.rowData?.[0]?.values?.[0]?.dataValidation?.condition?.values;
+  const etapas = Array.isArray(values) ? values.map((v: any) => String(v.userEnteredValue ?? "").trim()).filter(Boolean) : [];
+  return etapas.length ? etapas : null;
+}
 
 // Read-only mirror of a CRM export sheet: the source's rows are replaced on every read.
 export async function syncCrmPlanilha(f: Fonte) {
@@ -18,6 +30,7 @@ export async function syncCrmPlanilha(f: Fonte) {
     const data = await gget(`/spreadsheets/${f.spreadsheet_id}/values/${encodeURIComponent(`${q(tab)}!A1:AZ5000`)}`);
     const leads = parseCrmGrid(data.values ?? []);
     if (!leads.length) throw new Error("Nenhuma linha com nome, telefone ou e-mail");
+    const etapas = await ordemEtapas(f.spreadsheet_id, tab, data.values?.[0] ?? []);
     const now = new Date().toISOString();
     const rows = leads.map((l) => ({ ...l, webhook_id: f.id, cliente_id: f.cliente_id, atualizado_em: now }));
     const { error: de } = await db.from("crm_leads").delete().eq("webhook_id", f.id);
@@ -26,7 +39,7 @@ export async function syncCrmPlanilha(f: Fonte) {
       const { error } = await db.from("crm_leads").upsert(rows.slice(i, i + 500), { onConflict: "webhook_id,external_id" });
       if (error) throw new Error(error.message);
     }
-    await db.from("crm_webhooks").update({ ultimo_recebimento: now, ultimo_erro: null }).eq("id", f.id);
+    await db.from("crm_webhooks").update({ ultimo_recebimento: now, ultimo_erro: null, ...(etapas ? { etapas } : {}) }).eq("id", f.id);
     return { ok: true, linhas: rows.length };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

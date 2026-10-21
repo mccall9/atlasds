@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeCrmMetrics, maskPhone, parseCrmGrid, parseCrmLead, parseWhen, type CrmLead } from "@/lib/crm";
+import { computeCrmMetrics, maskPhone, papelEtapa, parseCrmGrid, parseCrmLead, parseWhen, type CrmLead } from "@/lib/crm";
 
 describe("parseCrmLead", () => {
   it("reads flat Portuguese fields with accents and spacing", () => {
@@ -125,5 +125,35 @@ describe("raw CRM export (semicolon CSV)", () => {
     expect(m.vendas).toHaveLength(2);
     expect(m.faturamento).toBe(130);
     expect(m.hoje).toHaveLength(2);
+  });
+});
+
+describe("client-specific CRM stages", () => {
+  const lead = (etapa: string, p: Partial<CrmLead> = {}): CrmLead => ({
+    id: Math.random().toString(), webhook_id: "w", cliente_id: null, external_id: null, nome: "x", telefone: null, email: null, campanha: null, conjunto: null, criativo: null,
+    origem: null, etapa, valor: null, produto: null, situacao: "ABERTO", criado_em: "2026-10-10T15:00:00Z", movido_em: "2026-10-12T15:00:00Z", ganho_em: null,
+    payload: {}, recebido_em: "2026-10-20T12:00:00Z", atualizado_em: "", ...p,
+  });
+
+  it("guesses sale and loss stages from their names", () => {
+    expect(papelEtapa("CLIENTES ATENDIDOS")).toBe("venda");
+    expect(papelEtapa("VENDAS REALIZADAS")).toBe("venda");
+    expect(papelEtapa("SEM RETORNO")).toBe("perda");
+    expect(papelEtapa("EM AGENDAMENTO")).toBe("funil");
+    expect(papelEtapa("AGENDADOS", { papeis: { agendados: "venda" } })).toBe("venda");
+  });
+
+  it("lists every dropdown stage in order and counts sales by role", () => {
+    const rows = [lead("CLIENTES ATENDIDOS", { valor: 50 }), lead("CLIENTES ATENDIDOS", { valor: 30 }), lead("SEM RETORNO"), lead("NOVOS CONTATOS"), lead("AGENDADO")];
+    const regras = { w: { ordem: ["NOVOS CONTATOS", "EM AGENDAMENTO", "AGENDADOS", "CLIENTES ATENDIDOS", "SEM RETORNO"] } };
+    const m = computeCrmMetrics(rows, "2026-10-01", "2026-10-31", "2026-10-20", regras);
+    expect(m.etapas.map((e) => [e.nome, e.qtd, e.papel])).toEqual([
+      ["NOVOS CONTATOS", 1, "funil"], ["EM AGENDAMENTO", 0, "funil"], ["AGENDADOS", 0, "funil"], ["CLIENTES ATENDIDOS", 2, "venda"], ["SEM RETORNO", 1, "perda"], ["AGENDADO", 1, "funil"],
+    ]);
+    expect(m.vendas).toHaveLength(2);
+    expect(m.faturamento).toBe(80);
+    expect(m.perdidos).toHaveLength(1);
+    const override = computeCrmMetrics(rows, "2026-10-01", "2026-10-31", "2026-10-20", { w: { ...regras.w, papeis: { "clientes atendidos": "funil" } } });
+    expect(override.vendas).toHaveLength(0);
   });
 });
