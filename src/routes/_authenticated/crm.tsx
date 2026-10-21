@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  CalendarCheck, CalendarClock, Clapperboard, Copy, ExternalLink, FileDown, HeartHandshake, Layers, Megaphone, Percent, Phone, Plus, Receipt, RefreshCw, Scissors,
+  CalendarClock, Clapperboard, Copy, ExternalLink, FileDown, HeartHandshake, Layers, Megaphone, Percent, Plus, Receipt, RefreshCw, Scissors,
   Sheet, Target, Trash2, TrendingUp, UserX, Users, Waypoints, Webhook,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,11 +130,9 @@ function Crm() {
       ) : (
         <div className="report-dashboard space-y-10">
           <Section title="Leads" tone="blue">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Card tone="blue" icon={Users} label="Novos Leads" value={fmtInt(m.leads.length)} hint="Criados no período" onClick={open("Novos leads", m.leads)} />
-              <Card tone="blue" icon={CalendarCheck} label="Leads Hoje" value={fmtInt(m.hoje.length)} onClick={open("Leads de hoje", m.hoje)} />
               <Card tone="blue" icon={TrendingUp} label="Média por Dia" value={m.mediaDia == null ? "—" : m.mediaDia.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} hint="Dias com leads" />
-              <Card tone="blue" icon={Phone} label="Com Telefone" value={fmtInt(m.comTelefone.length)} hint={m.taxaTelefone == null ? "Sem leads no período" : `${fmtPct(m.taxaTelefone)} dos leads`} onClick={open("Leads com telefone", m.comTelefone)} />
             </div>
           </Section>
 
