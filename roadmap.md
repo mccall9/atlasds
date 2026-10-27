@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Segunda empresa (Barbearias) no mesmo painel: seletor no topo, gestores de tráfego por convite, cadastro de barbearias, Meta Ads própria e painel com anúncios + CRM; isolamento conferido no banco com usuários simulados.
 - [x] Aba CRM lendo planilha com exportação do CRM (simulação de barbearia com 45 negócios fictícios): leads, vendas, faturamento, ticket, conversão, funil e produtos; 36 testes aprovados.
 - [x] Aba CRM (teste) com webhook de recebimento de leads (nome, telefone, campanha, origem, etapa) e cards por período; 33 testes aprovados, build e tipos sem erros.
 - [x] Tela Integrações com fluxo OAuth nativo da Meta (App ID, App Secret, URL de redirecionamento, conexão e vínculo de contas aos doutores).

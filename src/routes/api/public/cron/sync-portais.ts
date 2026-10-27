@@ -1,14 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
-// Meta Ads daily spend is refreshed on the same schedule, at most every 10 minutes, for the last 40 days.
+// Meta Ads daily spend is refreshed on the same schedule, at most every 10 minutes, for the last 40 days, one company at a time.
 async function importMetaIfDue(db: any) {
-  const { data } = await db.from("meta_conexao").select("last_import_at").eq("id", 1).maybeSingle();
-  if (!data) return null;
-  if (data.last_import_at && Date.now() - new Date(data.last_import_at).getTime() < 10 * 60_000) return { skipped: true };
-  const { importMetaInvestimentos } = await import("@/lib/meta.server");
-  const r = await importMetaInvestimentos({ dias: 40 });
-  return { ok: r.ok, dias: r.dias };
+  const { conexaoId, importMetaInvestimentos } = await import("@/lib/meta.server");
+  const out: Record<string, unknown> = {};
+  for (const empresa of ["atlas", "barbearias"] as const) {
+    const { data } = await db.from("meta_conexao").select("last_import_at").eq("id", conexaoId(empresa)).maybeSingle();
+    if (!data) continue;
+    if (data.last_import_at && Date.now() - new Date(data.last_import_at).getTime() < 10 * 60_000) { out[empresa] = { skipped: true }; continue; }
+    const r = await importMetaInvestimentos({ dias: 40, empresa });
+    out[empresa] = { ok: r.ok, dias: r.dias };
+  }
+  return out;
 }
 
 // CRM export sheets follow the same cadence, each read at most every 10 minutes.

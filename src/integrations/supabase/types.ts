@@ -65,6 +65,7 @@ export type Database = {
         Row: {
           ativo: boolean
           created_at: string
+          empresa: string
           hunter: string | null
           id: string
           last_sync_at: string | null
@@ -74,11 +75,12 @@ export type Database = {
           nome: string
           performance: string | null
           share_token: string | null
-          spreadsheet_id: string
+          spreadsheet_id: string | null
         }
         Insert: {
           ativo?: boolean
           created_at?: string
+          empresa?: string
           hunter?: string | null
           id?: string
           last_sync_at?: string | null
@@ -88,11 +90,12 @@ export type Database = {
           nome: string
           performance?: string | null
           share_token?: string | null
-          spreadsheet_id: string
+          spreadsheet_id?: string | null
         }
         Update: {
           ativo?: boolean
           created_at?: string
+          empresa?: string
           hunter?: string | null
           id?: string
           last_sync_at?: string | null
@@ -102,7 +105,7 @@ export type Database = {
           nome?: string
           performance?: string | null
           share_token?: string | null
-          spreadsheet_id?: string
+          spreadsheet_id?: string | null
         }
         Relationships: []
       }
@@ -136,6 +139,27 @@ export type Database = {
           pct_performance?: number
           pct_total?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      convites_acesso: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          empresa: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          empresa?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          empresa?: string
         }
         Relationships: []
       }
@@ -233,6 +257,7 @@ export type Database = {
           cliente_id: string | null
           created_at: string
           created_by: string | null
+          empresa: string
           etapas: string[] | null
           etapas_papeis: Json | null
           id: string
@@ -249,6 +274,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           created_by?: string | null
+          empresa?: string
           etapas?: string[] | null
           etapas_papeis?: Json | null
           id?: string
@@ -265,6 +291,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           created_by?: string | null
+          empresa?: string
           etapas?: string[] | null
           etapas_papeis?: Json | null
           id?: string
@@ -462,6 +489,7 @@ export type Database = {
       meta_oauth_states: {
         Row: {
           created_at: string
+          empresa: string
           expires_at: string
           redirect_uri: string
           return_origin: string
@@ -470,6 +498,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          empresa?: string
           expires_at?: string
           redirect_uri: string
           return_origin: string
@@ -478,6 +507,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          empresa?: string
           expires_at?: string
           redirect_uri?: string
           return_origin?: string
@@ -856,7 +886,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "equipe" | "cliente"
+      app_role: "admin" | "equipe" | "cliente" | "gestor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -984,7 +1014,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "equipe", "cliente"],
+      app_role: ["admin", "equipe", "cliente", "gestor"],
     },
   },
 } as const

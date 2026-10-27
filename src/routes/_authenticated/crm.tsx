@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  CalendarClock, Clapperboard, Copy, ExternalLink, FileDown, FileUp, HeartHandshake, Layers, Megaphone, Percent, Plus, Receipt, RefreshCw, Scissors,
+  CalendarClock, Clapperboard, Coins, Copy, ExternalLink, FileDown, FileUp, HeartHandshake, Layers, Megaphone, MessagesSquare, Percent, Plus, Receipt, RefreshCw, Scissors,
   Sheet, Target, Trash2, TrendingUp, UserX, Users, Waypoints, Webhook,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,8 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AdminOnly, useConfig } from "@/components/atlas/AppShell";
+import { GestorOuAdmin, useConfig } from "@/components/atlas/AppShell";
+import { EMPRESAS, useClientes, useEmpresa } from "@/lib/empresa";
 import { PanelTitle } from "@/components/atlas/PanelHeader";
 import { Card, Section } from "@/components/atlas/Dashboard";
 import { computeCrmMetrics, dataLead, isVenda, maskPhone, papelEtapa, type CrmLead, type Papel, type Regras } from "@/lib/crm";
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/crm")({
       { property: "og:description", content: "Leads e vendas do CRM por planilha ou webhook (teste)." },
     ],
   }),
-  component: () => <AdminOnly><Crm /></AdminOnly>,
+  component: () => <GestorOuAdmin><Crm /></GestorOuAdmin>,
 });
 
 const NONE = "__none__";
@@ -64,31 +65,49 @@ function Crm() {
   const [custom, setCustom] = useState(() => presetRange("este-mes"));
   const range = preset === "custom" ? custom : presetRange(preset);
   const [fonteFiltro, setFonteFiltro] = useState("todos");
+  const [barbearia, setBarbearia] = useState("todos");
+  const { empresa } = useEmpresa();
   const [audit, setAudit] = useState<Audit>(null);
   const [payload, setPayload] = useState<CrmLead | null>(null);
 
-  const clientes = useQuery({ queryKey: ["clientes"], queryFn: async () => (await supabase.from("clientes").select("*").order("nome")).data ?? [] });
+  const clientes = useClientes(empresa);
   const fontes = useQuery({
-    queryKey: ["crm-webhooks"],
-    queryFn: async () => (await supabase.from("crm_webhooks").select("*").order("created_at")).data ?? [],
+    queryKey: ["crm-webhooks", empresa],
+    queryFn: async () => (await supabase.from("crm_webhooks").select("*").eq("empresa", empresa).order("created_at")).data ?? [],
     refetchInterval: 30_000,
   });
-  // All leads of the selected sources: sales are dated by stage changes, which can fall outside the lead's creation period.
+  // All leads of the company's sources: sales are dated by stage changes, which can fall outside the lead's creation period.
   const leads = useQuery({
-    queryKey: ["crm-leads"],
+    queryKey: ["crm-leads", empresa],
     queryFn: async () => {
-      const { data, error } = await supabase.from("crm_leads").select("*").order("recebido_em", { ascending: false }).limit(10000);
+      const { data, error } = await supabase.from("crm_leads").select("*, crm_webhooks!inner(empresa)").eq("crm_webhooks.empresa", empresa)
+        .order("recebido_em", { ascending: false }).limit(10000);
       if (error) throw error;
-      return data as CrmLead[];
+      return data as unknown as CrmLead[];
     },
     refetchInterval: 30_000,
   });
+  // Daily Meta spend of the company's clients, imported by the scheduled cron.
+  const investimentos = useQuery({
+    queryKey: ["crm-investimentos", empresa, range.de, range.ate],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("investimento_anuncios").select("cliente_id, data, valor_investido, conversas_iniciadas, clientes!inner(empresa)")
+        .eq("clientes.empresa", empresa).gte("data", range.de).lte("data", range.ate);
+      if (error) throw error;
+      return data ?? [];
+    },
+    refetchInterval: 60_000,
+  });
   const refresh = () => { qc.invalidateQueries({ queryKey: ["crm-webhooks"] }); qc.invalidateQueries({ queryKey: ["crm-leads"] }); };
 
-  const rows = useMemo(() => (leads.data ?? []).filter((r) => fonteFiltro === "todos" || r.webhook_id === fonteFiltro), [leads.data, fonteFiltro]);
+  // A barbershop's leads come from the sources currently linked to it.
+  const clienteDaFonte = useMemo(() => new Map((fontes.data ?? []).map((f) => [f.id, f.cliente_id])), [fontes.data]);
+  const fontesVisiveis = (fontes.data ?? []).filter((f) => (fonteFiltro === "todos" || f.id === fonteFiltro) && (barbearia === "todos" || f.cliente_id === barbearia));
+  const rows = useMemo(() => (leads.data ?? []).filter((r) => (fonteFiltro === "todos" || r.webhook_id === fonteFiltro)
+    && (barbearia === "todos" || clienteDaFonte.get(r.webhook_id) === barbearia)), [leads.data, fonteFiltro, barbearia, clienteDaFonte]);
   const regras = useMemo<Regras>(() => Object.fromEntries((fontes.data ?? [])
-    .filter((f) => fonteFiltro === "todos" || f.id === fonteFiltro)
-    .map((f) => [f.id, { ordem: f.etapas, papeis: f.etapas_papeis as Record<string, Papel> | null }])), [fontes.data, fonteFiltro]);
+    .filter((f) => (fonteFiltro === "todos" || f.id === fonteFiltro) && (barbearia === "todos" || f.cliente_id === barbearia))
+    .map((f) => [f.id, { ordem: f.etapas, papeis: f.etapas_papeis as Record<string, Papel> | null }])), [fontes.data, fonteFiltro, barbearia]);
   const m = useMemo(() => computeCrmMetrics(rows, range.de, range.ate, undefined, regras), [rows, range.de, range.ate, regras]);
   const venda = (r: CrmLead) => isVenda(r, regras);
   const etapasPorFonte = useMemo(() => {
@@ -98,8 +117,17 @@ function Crm() {
   }, [leads.data]);
   const open = (title: string, rs: CrmLead[]) => () => setAudit({ title, rows: rs });
   const nomeCliente = (id: string | null) => clientes.data?.find((c) => c.id === id)?.nome ?? "—";
-  const fonteNome = fonteFiltro === "todos" ? "Todas as fontes" : fontes.data?.find((f) => f.id === fonteFiltro)?.nome ?? "CRM";
-  const ultimaLeitura = (fontes.data ?? []).filter((f) => fonteFiltro === "todos" || f.id === fonteFiltro).map((f) => f.ultimo_recebimento).filter(Boolean).sort().at(-1) ?? null;
+  const quem = empresa === "barbearias" ? "barbearia" : "cliente";
+  const fonteNome = barbearia !== "todos" ? nomeCliente(barbearia)
+    : fonteFiltro !== "todos" ? fontes.data?.find((f) => f.id === fonteFiltro)?.nome ?? "CRM"
+    : empresa === "barbearias" ? "Todas as barbearias" : "Todos os clientes";
+  const ultimaLeitura = fontesVisiveis.map((f) => f.ultimo_recebimento).filter(Boolean).sort().at(-1) ?? null;
+  // Ad spend follows the barbershop filter; a single source narrows it to that source's barbershop.
+  const clienteAnuncio = barbearia !== "todos" ? barbearia : fonteFiltro !== "todos" ? clienteDaFonte.get(fonteFiltro) ?? null : null;
+  const inv = (investimentos.data ?? []).filter((r) => (barbearia === "todos" && fonteFiltro === "todos") || r.cliente_id === clienteAnuncio);
+  const investido = inv.length ? inv.reduce((a, r) => a + Number(r.valor_investido), 0) : null;
+  const conversas = inv.length ? inv.reduce((a, r) => a + Number(r.conversas_iniciadas), 0) : null;
+  const por = (a: number | null, b: number | null | undefined) => (a == null || !b ? null : a / b);
   // The sales card takes the client's own name for its sale stage (e.g. "Clientes Atendidos").
   const etapasVenda = m.etapas.filter((e) => e.papel === "venda" && e.nome !== "Sem etapa");
   const rotuloVenda = etapasVenda.length === 1 && !/vendas? realizadas?/.test(norm(etapasVenda[0]!.nome))
@@ -110,19 +138,26 @@ function Crm() {
   return (
     <div className="panel-report space-y-8">
       <PanelTitle
-        logoUrl={cfg.data?.logo_url} title="Relatório CRM" de={range.de} ate={range.ate} clienteNome={fonteNome} lastSync={ultimaLeitura}
-        subtitle="Teste · leads e vendas do CRM lidos de uma planilha (exportação do CRM) ou recebidos por webhook. Não altera os Portais nem o Painel."
-        printSubtitle="Visão executiva do CRM — leads, etapas, vendas e campanhas."
+        logoUrl={cfg.data?.logo_url} title="Painel de Resultados" de={range.de} ate={range.ate} clienteNome={fonteNome} lastSync={ultimaLeitura}
+        subtitle={`${EMPRESAS[empresa].nome} · anúncios, leads, etapas e vendas do CRM de cada ${quem}`}
+        printSubtitle="Visão executiva consolidada — anúncios, leads, vendas e campanhas."
       />
 
-      <div className="no-print"><Fontes fontes={fontes.data} loading={fontes.isLoading} clientes={clientes.data ?? []} etapasPorFonte={etapasPorFonte} onChange={refresh} /></div>
+      <div className="no-print"><Fontes fontes={fontes.data} loading={fontes.isLoading} clientes={clientes.data ?? []} etapasPorFonte={etapasPorFonte} empresa={empresa} onChange={refresh} /></div>
 
       <div className="no-print sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-2 border-y bg-background/90 px-4 py-3 backdrop-blur md:-mx-8 md:px-8">
+        <Select value={barbearia} onValueChange={(v) => { setBarbearia(v); setFonteFiltro("todos"); }}>
+          <SelectTrigger className="w-60"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">{empresa === "barbearias" ? "Todas as barbearias" : "Todos os clientes"}</SelectItem>
+            {clientes.data?.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <Select value={fonteFiltro} onValueChange={setFonteFiltro}>
-          <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todas as fontes</SelectItem>
-            {fontes.data?.map((h) => <SelectItem key={h.id} value={h.id}>{h.nome}</SelectItem>)}
+            {fontes.data?.filter((h) => barbearia === "todos" || h.cliente_id === barbearia).map((h) => <SelectItem key={h.id} value={h.id}>{h.nome}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={preset} onValueChange={(v) => { if (v === "custom") setCustom(range); setPreset(v as Preset); }}>
@@ -138,13 +173,25 @@ function Crm() {
           <span className="text-sm font-medium">{fmtDate(range.de)} - {fmtDate(range.ate)}</span>
         )}
         <span className="text-xs text-muted-foreground">Leads pela data de criação · {rotuloVenda.toLowerCase()} pela data em que entraram na etapa</span>
-        <Button size="sm" className="ml-auto" disabled={!leads.data} onClick={() => void printPanel(fonteNome, range.de, range.ate, "Relatório CRM")}><FileDown className="size-4" />Exportar PDF</Button>
+        <Button size="sm" className="ml-auto" disabled={!leads.data} onClick={() => void printPanel(fonteNome, range.de, range.ate)}><FileDown className="size-4" />Exportar PDF</Button>
       </div>
 
       {leads.isLoading ? <Skeleton className="h-64 w-full" /> : leads.isError ? (
         <p className="text-sm text-destructive">Não foi possível carregar os leads do CRM.</p>
       ) : (
         <div className="report-dashboard space-y-10">
+          <Section title="Anúncios" tone="blue">
+            {investido == null && <p className="text-xs text-muted-foreground">Sem investimento no período. Vincule a conta de anúncio da {quem} em Integrações; a leitura da Meta roda a cada 15 minutos.</p>}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <Card tone="blue" icon={Megaphone} label="Valor Investido" value={fmtBRL(investido)} hint="Meta Ads no período" />
+              <Card tone="blue" icon={MessagesSquare} label="Conversas Iniciadas" value={fmtInt(conversas)} hint="Mensagens vindas dos anúncios" />
+              <Card tone="blue" icon={Coins} label="Custo por Conversa" value={fmtBRL(por(investido, conversas))} hint="Investido ÷ Conversas" />
+              <Card tone="blue" icon={Users} label="Custo por Lead" value={fmtBRL(por(investido, m.leads.length))} hint="Investido ÷ Novos leads" />
+              <Card tone="blue" icon={HeartHandshake} label={`Custo por ${rotuloVenda === "Vendas Realizadas" ? "Venda" : "Atendimento"}`} value={fmtBRL(por(investido, m.vendas.length))} hint={`Investido ÷ ${rotuloVenda}`} />
+              <Card tone="blue" icon={TrendingUp} label="Retorno sobre Investimento" value={m.faturamento == null || !investido ? "—" : `${(m.faturamento / investido).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}x`} hint="Faturamento ÷ Investido" destaque />
+            </div>
+          </Section>
+
           <Section title="Leads" tone="blue">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Card tone="blue" icon={Users} label="Novos Leads" value={fmtInt(m.leads.length)} hint="Criados no período" onClick={open("Novos leads", m.leads)} />
@@ -316,7 +363,7 @@ type Fonte = { id: string; nome: string; token: string; cliente_id: string | nul
 type Tipo = "arquivo" | "planilha" | "webhook";
 const tipoDe = (f: Fonte): Tipo => (f.tipo === "arquivo" ? "arquivo" : f.spreadsheet_id ? "planilha" : "webhook");
 
-function Fontes({ fontes, loading, clientes, etapasPorFonte, onChange }: { fontes: Fonte[] | undefined; loading: boolean; clientes: { id: string; nome: string }[]; etapasPorFonte: Record<string, string[]>; onChange: () => void }) {
+function Fontes({ fontes, loading, clientes, etapasPorFonte, empresa, onChange }: { fontes: Fonte[] | undefined; loading: boolean; clientes: { id: string; nome: string }[]; etapasPorFonte: Record<string, string[]>; empresa: "atlas" | "barbearias"; onChange: () => void }) {
   const [editando, setEditando] = useState<Fonte | null>(null);
   const syncFn = useServerFn(syncCrmNow);
   const importFn = useServerFn(importCrmArquivo);
@@ -372,7 +419,7 @@ function Fontes({ fontes, loading, clientes, etapasPorFonte, onChange }: { fonte
     const { data: u } = await supabase.auth.getUser();
     const { data, error } = await supabase.from("crm_webhooks").insert({
       nome: nome.trim(), cliente_id: cliente === NONE ? null : cliente, created_by: u.user?.id ?? null,
-      spreadsheet_id: spreadsheetId, aba: tipo === "planilha" && aba.trim() ? aba.trim() : null, tipo: tipo === "arquivo" ? "arquivo" : null,
+      spreadsheet_id: spreadsheetId, aba: tipo === "planilha" && aba.trim() ? aba.trim() : null, tipo: tipo === "arquivo" ? "arquivo" : null, empresa,
     }).select("id").single();
     setSalvando(false);
     if (error) { toast.error("Não foi possível criar a fonte"); return; }
@@ -427,7 +474,7 @@ function Fontes({ fontes, loading, clientes, etapasPorFonte, onChange }: { fonte
         <Select value={cliente} onValueChange={setCliente}>
           <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={NONE}>Sem cliente vinculado</SelectItem>
+            <SelectItem value={NONE}>{empresa === "barbearias" ? "Sem barbearia vinculada" : "Sem cliente vinculado"}</SelectItem>
             {clientes.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -458,7 +505,7 @@ function Fontes({ fontes, loading, clientes, etapasPorFonte, onChange }: { fonte
                 <Select value={h.cliente_id ?? NONE} onValueChange={(v) => atualizar(h.id, { cliente_id: v === NONE ? null : v })}>
                   <SelectTrigger className="w-52 bg-card"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={NONE}>Sem cliente vinculado</SelectItem>
+                    <SelectItem value={NONE}>{empresa === "barbearias" ? "Sem barbearia vinculada" : "Sem cliente vinculado"}</SelectItem>
                     {clientes.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>

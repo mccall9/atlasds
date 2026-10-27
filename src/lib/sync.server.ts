@@ -198,7 +198,7 @@ export async function syncCliente(c: { id: string; spreadsheet_id: string; layou
 
 export async function syncTodos(clienteId?: string) {
   const db = supabaseAdmin as any;
-  let query = db.from("clientes").select("id, nome, spreadsheet_id, layout").eq("ativo", true);
+  let query = db.from("clientes").select("id, nome, spreadsheet_id, layout").eq("ativo", true).eq("empresa", "atlas").not("spreadsheet_id", "is", null);
   if (clienteId) query = query.eq("id", clienteId);
   const { data, error } = await query;
   if (error) throw new Error(error.message);

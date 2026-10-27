@@ -3,22 +3,32 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { META_GRAPH_VERSION, META_SCOPES, isAllowedMetaOrigin, metaRedirectUri } from "./meta-config";
 
-async function assertAdmin(context: { supabase: any; userId: string }) {
-  const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-  if (!data) throw new Error("Sem permissão");
+const Empresa = z.object({ empresa: z.enum(["atlas", "barbearias"]) });
+
+// Atlas's connection is admin-only; the barbershops' one is also managed by its gestores.
+async function assertAcesso(context: { supabase: any; userId: string }, empresa: "atlas" | "barbearias") {
+  const { data: admin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  if (admin) return;
+  if (empresa === "barbearias") {
+    const { data: gestor } = await context.supabase.rpc("is_gestor", { _user_id: context.userId });
+    if (gestor) return;
+  }
+  throw new Error("Sem permissão");
 }
 
 export const getMetaStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
+  .inputValidator((d: unknown) => Empresa.parse(d))
+  .handler(async ({ data: input, context }) => {
+    await assertAcesso(context, input.empresa);
+    const { conexaoId } = await import("./meta.server");
     const { metaCreds } = await import("./meta.server");
     const { appId, appSecret } = metaCreds();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
       .from("meta_conexao")
       .select("meta_user_name, meta_user_id, token_expires_at, connected_at, scopes, last_import_at, last_import_error")
-      .eq("id", 1)
+      .eq("id", conexaoId(input.empresa))
       .maybeSingle();
     return {
       appIdConfigurado: !!appId,
@@ -31,9 +41,9 @@ export const getMetaStatus = createServerFn({ method: "GET" })
 
 export const startMetaOAuth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ origin: z.string().url().max(200) }).parse(d))
+  .inputValidator((d: unknown) => Empresa.extend({ origin: z.string().url().max(200) }).parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertAcesso(context, data.empresa);
     if (!isAllowedMetaOrigin(data.origin)) return { error: "origem" as const };
     const { metaCreds } = await import("./meta.server");
     const { appId, appSecret } = metaCreds();
@@ -45,7 +55,7 @@ export const startMetaOAuth = createServerFn({ method: "POST" })
     await supabaseAdmin.from("meta_oauth_states").delete().lt("expires_at", new Date().toISOString());
     const { error } = await supabaseAdmin
       .from("meta_oauth_states")
-      .insert({ state, user_id: context.userId, redirect_uri: redirectUri, return_origin: data.origin });
+      .insert({ state, user_id: context.userId, redirect_uri: redirectUri, return_origin: data.origin, empresa: data.empresa });
     if (error) throw new Error("Não foi possível iniciar a conexão");
     const url = new URL(`https://www.facebook.com/${META_GRAPH_VERSION}/dialog/oauth`);
     url.searchParams.set("client_id", appId);
@@ -58,10 +68,11 @@ export const startMetaOAuth = createServerFn({ method: "POST" })
 
 export const listMetaAdAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
+  .inputValidator((d: unknown) => Empresa.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAcesso(context, data.empresa);
     const { getMetaToken, listAdAccounts, MetaApiError } = await import("./meta.server");
-    const token = await getMetaToken();
+    const token = await getMetaToken(data.empresa);
     if (!token) return { contas: [], error: "desconectado" as const };
     try {
       return { contas: await listAdAccounts(token), error: null };
@@ -72,17 +83,20 @@ export const listMetaAdAccounts = createServerFn({ method: "GET" })
 
 export const disconnectMeta = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
+  .inputValidator((d: unknown) => Empresa.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAcesso(context, data.empresa);
+    const { conexaoId } = await import("./meta.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("meta_conexao").delete().eq("id", 1);
+    await supabaseAdmin.from("meta_conexao").delete().eq("id", conexaoId(data.empresa));
     return { ok: true };
   });
 
 export const importMetaNow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
+  .inputValidator((d: unknown) => Empresa.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAcesso(context, data.empresa);
     const { importMetaInvestimentos } = await import("./meta.server");
-    return importMetaInvestimentos({ dias: 400 });
+    return importMetaInvestimentos({ dias: 400, empresa: data.empresa });
   });
