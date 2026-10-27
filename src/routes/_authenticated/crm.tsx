@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AdminOnly, useConfig } from "@/components/atlas/AppShell";
-import { PanelTitle, PrintFooter } from "@/components/atlas/PanelHeader";
+import { PanelTitle } from "@/components/atlas/PanelHeader";
 import { Card, Section } from "@/components/atlas/Dashboard";
 import { computeCrmMetrics, dataLead, isVenda, maskPhone, papelEtapa, type CrmLead, type Papel, type Regras } from "@/lib/crm";
 import { importCrmArquivo, syncCrmNow } from "@/lib/crm.functions";
@@ -112,6 +112,7 @@ function Crm() {
       <PanelTitle
         logoUrl={cfg.data?.logo_url} title="Relatório CRM" de={range.de} ate={range.ate} clienteNome={fonteNome} lastSync={ultimaLeitura}
         subtitle="Teste · leads e vendas do CRM lidos de uma planilha (exportação do CRM) ou recebidos por webhook. Não altera os Portais nem o Painel."
+        printSubtitle="Visão executiva do CRM — leads, etapas, vendas e campanhas."
       />
 
       <div className="no-print"><Fontes fontes={fontes.data} loading={fontes.isLoading} clientes={clientes.data ?? []} etapasPorFonte={etapasPorFonte} onChange={refresh} /></div>
@@ -137,7 +138,7 @@ function Crm() {
           <span className="text-sm font-medium">{fmtDate(range.de)} - {fmtDate(range.ate)}</span>
         )}
         <span className="text-xs text-muted-foreground">Leads pela data de criação · {rotuloVenda.toLowerCase()} pela data em que entraram na etapa</span>
-        <Button size="sm" className="ml-auto" disabled={!leads.data} onClick={() => void printPanel(fonteNome, range.de, range.ate)}><FileDown className="size-4" />Exportar PDF</Button>
+        <Button size="sm" className="ml-auto" disabled={!leads.data} onClick={() => void printPanel(fonteNome, range.de, range.ate, "Relatório CRM")}><FileDown className="size-4" />Exportar PDF</Button>
       </div>
 
       {leads.isLoading ? <Skeleton className="h-64 w-full" /> : leads.isError ? (
@@ -234,8 +235,6 @@ function Crm() {
           </Section>
         </div>
       )}
-
-      <PrintFooter />
 
       <Dialog open={!!audit} onOpenChange={(o) => !o && setAudit(null)}>
         <DialogContent className="max-w-5xl">

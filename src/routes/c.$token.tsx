@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dashboard } from "@/components/atlas/Dashboard";
-import { PanelTitle, PrintFooter } from "@/components/atlas/PanelHeader";
+import { PanelTitle } from "@/components/atlas/PanelHeader";
 import { getSharedPanel } from "@/lib/sync.functions";
 import { fmtDate, fmtDateTime, presetRange, type Preset } from "@/lib/format";
 import type { PanelData } from "@/lib/metrics";
@@ -57,7 +57,6 @@ function SharedPanel() {
         </div>
       </div>
       <Dashboard data={data} clienteIds={[c.id]} de={range.de} ate={range.ate} carteira={false} />
-      <PrintFooter />
     </main>
   );
 }

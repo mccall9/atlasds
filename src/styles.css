@@ -213,36 +213,82 @@
     --g-red: oklch(0.58 0.2 25); --g-red-soft: oklch(0.95 0.035 25);
     --g-darkgreen: oklch(0.42 0.1 155); --g-darkgreen-soft: oklch(0.92 0.05 155);
   }
-  @page { size: A4 portrait; margin: 12mm 10mm 14mm; }
+  /* Report look: white cards without icons, navy type, ruled section titles (see painel-resultados PDFs). */
+  @page { size: A4 portrait; margin: 13mm 12mm 15mm; }
   .no-print { display: none !important; }
   .print-only { display: block !important; }
-  body { background: var(--card); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .report-hide, .report-empty { display: none !important; }
+  body { background: #fff; color: #1c2b3a; font-family: Inter, system-ui, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   main, .panel-report { max-width: none !important; padding: 0 !important; }
-  .report-title { display: block; }
-  .report-header { width: 100%; margin-bottom: 5mm; }
-  .report-dashboard { display: flex; flex-direction: column; gap: 5mm; }
+  .panel-report { display: flex; flex-direction: column; gap: 4mm; padding-right: 0.4mm !important; }
+  .panel-report > * { margin: 0 !important; }
+
+  .report-header { width: 100%; }
+  .report-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 6mm; }
+  .report-head h1 { margin: 0; font-size: 19pt; font-weight: 700; letter-spacing: -0.02em; color: #1c2b3a; }
+  .report-head p { margin: 1mm 0 0; font-size: 8pt; color: #6b7a8a; }
+  .report-head img { height: 15mm !important; width: auto; }
+  .report-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2mm 8mm; margin-top: 4.5mm; padding: 2.8mm 4mm; border: 1px solid #dfe5eb; border-radius: 2.5mm; background: #f8fafc; font-size: 8.5pt; }
+  .report-meta small { margin-right: 2mm; font-size: 7.5pt; color: #6b7a8a; }
+  .report-meta b { font-weight: 700; color: #1c2b3a; }
+  .report-meta .report-meta-sync { margin-left: auto; font-size: 7pt; color: #8a97a5; }
+  .report-warning { break-inside: avoid; }
+
+  .report-dashboard { display: flex; flex-direction: column; gap: 3.6mm; }
   .report-dashboard > * { margin: 0 !important; }
   .report-section { break-inside: avoid; }
-  .report-section h2 { margin-bottom: 2mm; letter-spacing: 0; }
-  .report-section .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2mm; }
-  .report-metric { padding: 3mm; gap: 2mm; border-radius: 3mm; box-shadow: none; }
-  .report-metric > div:first-child { width: 7mm; height: 7mm; border-radius: 2mm; }
-  .report-metric svg { width: 4mm; height: 4mm; }
-  .report-metric .text-2xl { font-size: 14pt; line-height: 1.25; white-space: normal; overflow: visible; }
-  .report-metric .text-xs { font-size: 8pt; }
+  .report-section > * + * { margin-top: 2mm !important; }
+  .report-section h2 { display: flex; align-items: center; gap: 3mm; margin: 0; font-size: 7pt; font-weight: 700; letter-spacing: 0.16em; color: #3e5f86 !important; break-after: avoid; }
+  .report-section h2::after { content: ""; flex: 1; height: 1px; background: #e2e7ec; }
+  .report-section h3 { font-size: 6.5pt; letter-spacing: 0.14em; color: #3e5f86; break-after: avoid; }
+  .report-count { margin-left: 2mm; font-size: 7pt; font-weight: 400; letter-spacing: 0; text-transform: none; color: #8a97a5; }
+  .report-section .grid { gap: 2.2mm !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .report-section .grid.xl\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .report-section .grid.xl\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+  .report-section .grid.md\:grid-cols-2:not([class*="xl:"]):not([class*="md:grid-cols-3"]) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+
+  .report-metric { display: block !important; min-height: 0; padding: 2.3mm 3.2mm !important; border: 1px solid #dfe5eb !important; border-radius: 2.5mm !important; background: #fff !important; box-shadow: none !important; transform: none !important; }
+  .report-metric > div:first-child { display: none !important; }
+  .report-metric .text-xs { font-size: 7pt; color: #4f5f70 !important; }
+  .report-metric .text-2xl { margin-top: 0.6mm; font-size: 13pt; font-weight: 700; line-height: 1.2; white-space: normal; overflow: visible; color: #1c2b3a; }
+  .report-metric .text-2xl + .text-xs { margin-top: 0.8mm; font-size: 6.5pt; color: #8a97a5 !important; }
+  .report-highlight { background: #f1f5fa !important; border-color: #d3dde8 !important; }
+  .report-highlight .text-2xl { color: #2f4f7a !important; }
+
+  .report-pipeline { padding: 2.3mm 3.2mm !important; border: 1px solid #dfe5eb !important; border-radius: 2.5mm !important; background: #fff !important; box-shadow: none !important; }
+  .report-pipeline .rp-mes { font-size: 7pt; color: #4f5f70; }
+  .report-pipeline .rp-row { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 1mm; }
+  .report-pipeline .rp-row b { font-size: 13pt; font-weight: 700; }
+  .report-pipeline .rp-row span { display: flex; flex-direction: column; align-items: flex-end; }
+  .report-pipeline .rp-row strong { font-size: 8pt; font-weight: 700; }
+  .report-pipeline .rp-row small { font-size: 6pt; color: #8a97a5; }
+
+  .report-bars-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 2.5mm; }
+  .report-bars { padding: 3mm 3.5mm; border: 1px solid #dfe5eb; border-radius: 2.5mm; }
+  .report-bars .rb-title { margin-bottom: 1.5mm; font-size: 7pt; font-weight: 600; color: #4f5f70; }
+  .report-bars .rb-row { display: grid; grid-template-columns: 20mm 1fr auto; align-items: center; gap: 2.5mm; padding: 0.8mm 0; font-size: 7pt; color: #4f5f70; }
+  .report-bars .rb-row i { display: block; height: 3mm; }
+  .report-bars .rb-row b { display: block; height: 100%; border-radius: 1mm; background: #3e5f86; }
+  .report-bars .rb-row strong { min-width: 10mm; text-align: right; font-weight: 700; color: #1c2b3a; }
+  .report-bars .rb-empty { font-size: 7pt; color: #8a97a5; }
+
+  .report-section .rounded-2xl.border.bg-card:not(.report-metric):not(.report-pipeline) { border-color: #dfe5eb; border-radius: 2.5mm; box-shadow: none; }
   .report-section .truncate { overflow: visible; text-overflow: clip; white-space: normal; max-width: none; }
   .report-section .overflow-auto, .report-section .overflow-x-auto { overflow: visible; }
-  .report-section table { width: 100%; table-layout: fixed; font-size: 7pt; }
-  .report-section th, .report-section td { padding: 1.5mm 1mm; height: auto; overflow-wrap: anywhere; white-space: normal; }
-  .report-section td span { white-space: normal; font-size: 6.5pt; }
+  .report-section table { width: 100%; table-layout: auto; font-size: 7pt; }
+  .report-section th { height: auto; padding: 1.6mm 1.2mm; font-weight: 500; color: #6b7a8a; border-bottom: 1px solid #dfe5eb; }
+  .report-section td { height: auto; padding: 1.7mm 1.2mm; border-bottom: 1px solid #edf1f4; overflow-wrap: anywhere; }
   .report-section thead { display: table-header-group; }
   .report-section tr { break-inside: avoid; }
-  .report-section h2, .report-section h3 { break-after: avoid; }
+
   .report-leads { order: 1; break-before: page; break-inside: auto; }
-  .report-leads > .bg-card { border: 0; padding: 0; }
-  .report-leads th:first-child { width: 16%; }
-  .report-leads th:nth-child(2) { width: 13%; }
-  .report-leads th:last-child { width: 15%; }
-  .report-warning { break-inside: avoid; }
-  .panel-report > .print-only:last-child { margin-top: 5mm; }
+  .report-leads h2 { font-size: 12pt; letter-spacing: -0.01em; text-transform: none; color: #1c2b3a !important; }
+  .report-leads h2::after { display: none; }
+  .report-leads > .bg-card { border: 0 !important; padding: 0 !important; }
+  .report-leads table { font-size: 6.6pt; }
+  .report-leads th, .report-leads td { white-space: nowrap; }
+  .report-leads td:first-child, .report-leads td.truncate { white-space: normal; }
+  .report-leads td:first-child { font-weight: 600; }
+  .report-leads td span[class*="rounded-full"] { display: inline-block; padding: 0.4mm 1.8mm; font-size: 6pt; text-transform: lowercase; white-space: nowrap; }
+  .report-leads td span[class*="rounded-full"]::first-letter { text-transform: uppercase; }
 }

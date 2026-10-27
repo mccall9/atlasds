@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dashboard } from "@/components/atlas/Dashboard";
-import { PanelTitle, PrintFooter } from "@/components/atlas/PanelHeader";
+import { PanelTitle } from "@/components/atlas/PanelHeader";
 import { useConfig, useRole } from "@/components/atlas/AppShell";
 import { loadPanelData } from "@/lib/panel-data";
 import { usePanelFreshness } from "@/hooks/use-panel-freshness";
@@ -152,7 +152,6 @@ function Painel() {
       ) : data ? (
         <Dashboard data={data} clienteIds={clienteIds} de={range.de} ate={range.ate} carteira={carteira} onSelectCliente={(id) => set({ cliente: id })} />
       ) : null}
-      <PrintFooter />
     </div>
   );
 }

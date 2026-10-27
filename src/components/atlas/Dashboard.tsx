@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { computeMetrics, weeklyMetrics, type PanelData, type Venda } from "@/lib/metrics";
-import { MES_LONGO, csvDownload, fmtBRL, fmtDate, fmtInt, fmtPct } from "@/lib/format";
+import { MES_LONGO, csvDownload, fmtBRL, fmtDate, fmtInt, fmtPct, toISO } from "@/lib/format";
 import { STATUSES } from "@/lib/parse";
 import { cn } from "@/lib/utils";
 
@@ -43,22 +43,22 @@ export function StatusBadge({ s }: { s: string | null }) {
 
 type Audit = { title: string; rows: Venda[] } | null;
 
-export function Section({ title, tone, children, className }: { title: string; tone?: Tone; children: ReactNode; className?: string }) {
+export function Section({ title, tone, children, className, count }: { title: string; tone?: Tone; children: ReactNode; className?: string | undefined; count?: string }) {
   return (
     <section className={cn("report-section space-y-3", className)}>
-      <h2 className={cn("text-xs font-bold uppercase tracking-[0.14em]", tone ? TONE[tone].title : "text-muted-foreground")}>{title}</h2>
+      <h2 className={cn("text-xs font-bold uppercase tracking-[0.14em]", tone ? TONE[tone].title : "text-muted-foreground")}>{title}{count && <span className="report-count ml-2 font-normal normal-case tracking-normal">{count}</span>}</h2>
       {children}
     </section>
   );
 }
 
-export function Card({ label, value, hint, icon: Icon, tone, onClick }: { label: string; value: string; hint?: string; icon: typeof Coins; tone: Tone; onClick?: () => void }) {
+export function Card({ label, value, hint, icon: Icon, tone, onClick, destaque }: { label: string; value: string; hint?: string; icon: typeof Coins; tone: Tone; onClick?: () => void; destaque?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={!onClick}
-      className={cn("report-metric group flex w-full items-start gap-4 rounded-2xl border bg-card p-5 text-left transition", onClick && "hover:-translate-y-0.5 hover:shadow-md")}
+      className={cn("report-metric group flex w-full items-start gap-4 rounded-2xl border bg-card p-5 text-left transition", onClick && "hover:-translate-y-0.5 hover:shadow-md", destaque && "report-highlight")}
     >
       <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl", TONE[tone].icon)}>
         <Icon className="size-5" />
@@ -81,10 +81,13 @@ export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente
   const [audit, setAudit] = useState<Audit>(null);
   const nomeCliente = (id: string) => data.clientes.find((c) => c.id === id)?.nome ?? "—";
   const open = (title: string, rows: Venda[]) => () => setAudit({ title, rows });
+  const hoje = toISO(new Date());
+  const porAcontecer = m.porConsulta.filter((r) => (r.data_consulta ?? "") > hoje).reduce((a, r) => a + (r.consultas ?? 0), 0);
+  const aguardandoSinal = m.leads.filter((r) => r.status === "AGUARDANDO SINAL").length;
 
   return (
     <div className="report-dashboard space-y-10">
-      <Section title="Anúncios" tone="blue">
+      <Section title="Anúncios" tone="blue" className={m.investido == null ? "report-empty" : undefined}>
         {m.investido == null && <p className="text-xs text-muted-foreground">Sem investimento lançado no período.</p>}
         <div className={grid3}>
           <Card tone="blue" icon={Megaphone} label="Valor Investido" value={fmtBRL(m.investido)} hint="Meta Ads + Google Ads" />
@@ -106,18 +109,18 @@ export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente
 
       <Section title="Consultas" tone="orange">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card tone="orange" icon={CalendarCheck} label="Consultas Agendadas" value={fmtInt(m.consultas)} onClick={open("Consultas no período", m.porConsulta)} />
-          <Card tone="orange" icon={Users} label="Comparecimentos" value={fmtInt(m.comparec)} onClick={open("Comparecimentos", m.porConsulta.filter((r) => (r.comparecimentos ?? 0) > 0))} />
-          <Card tone="orange" icon={Percent} label="Taxa de Comparecimento" value={fmtPct(m.taxaComp)} hint="Comparecimentos ÷ Consultas" />
+          <Card tone="orange" icon={CalendarCheck} label="Consultas Agendadas" value={fmtInt(m.consultas)} {...(porAcontecer ? { hint: `${fmtInt(porAcontecer)} ainda por acontecer` } : {})} onClick={open("Consultas no período", m.porConsulta)} />
+          <Card tone="orange" icon={Users} label="Comparecimentos" value={fmtInt(m.comparec)} hint={`Consultas já realizadas: ${fmtInt((m.consultas ?? 0) - porAcontecer)}`} onClick={open("Comparecimentos", m.porConsulta.filter((r) => (r.comparecimentos ?? 0) > 0))} />
+          <Card tone="orange" icon={Percent} label="Taxa de Comparecimento" value={fmtPct(m.taxaComp)} hint="Comparecimentos ÷ Consultas" destaque />
           <Card tone="orange" icon={Receipt} label="Orçamentos" value={fmtBRL(m.orcamentos)} hint="Total dos leads no período" onClick={open("Orçamentos no período", m.orcamentoRows)} />
         </div>
       </Section>
 
       <Section title="Taxa de conversão do doutor" tone="pink">
         <div className={grid3}>
-          <Card tone="pink" icon={Users} label="Comparecimentos" value={fmtInt(m.comparec)} onClick={open("Comparecimentos", m.porConsulta.filter((r) => (r.comparecimentos ?? 0) > 0))} />
-          <Card tone="pink" icon={HeartHandshake} label="Vendas Realizadas" value={fmtInt(m.vendasQtd)} hint={fmtBRL(m.valorVendido)} onClick={open("Vendas no período", m.porVenda)} />
-          <Card tone="pink" icon={Percent} label="Taxa de Conversão" value={fmtPct(m.taxaConv)} hint="Vendas ÷ Comparecimentos" />
+          <Card tone="pink" icon={Users} label="Comparecimentos" value={fmtInt(m.comparec)} hint="Comparecimentos no período" onClick={open("Comparecimentos", m.porConsulta.filter((r) => (r.comparecimentos ?? 0) > 0))} />
+          <Card tone="pink" icon={HeartHandshake} label="Vendas Realizadas" value={fmtInt(m.vendasQtd)} hint={`${fmtBRL(m.valorVendido)} vendidos${aguardandoSinal ? ` · ${fmtInt(aguardandoSinal)} aguardando sinal` : ""}`} onClick={open("Vendas no período", m.porVenda)} />
+          <Card tone="pink" icon={Percent} label="Taxa de Conversão" value={fmtPct(m.taxaConv)} hint="Vendas ÷ Comparecimentos" destaque />
         </div>
       </Section>
 
@@ -127,7 +130,7 @@ export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente
           <Card tone="teal" icon={TrendingUp} label="Faturamento Previsto" value={fmtBRL(m.fatPrev)} onClick={open("Faturamento previsto", m.projetados)} />
           <Card tone="teal" icon={Percent} label="Comissão Prevista" value={fmtBRL(m.comPrev)} hint={`${fmtPct(m.cfg.pct_total / 100)} do faturamento previsto`} onClick={open("Comissão prevista", m.projetados)} />
           <Card tone="teal" icon={Receipt} label="Ticket Médio" value={fmtBRL(m.ticketPrev)} />
-          <Card tone="teal" icon={Target} label="Meta Esperada" value={fmtBRL(m.meta.min)} hint={m.pctMeta == null ? "Sem meta cadastrada" : `${fmtPct(m.pctMeta)} atingido`} />
+          <Card tone="teal" icon={Target} label="Meta Esperada" value={fmtBRL(m.meta.min)} hint={m.pctMeta == null ? "Sem meta cadastrada" : `${fmtPct(m.pctMeta)} atingido (meta mínima)`} destaque />
           <Card tone="teal" icon={UserCheck} label={`Comissão Hunter (${m.cfg.pct_hunter}%)`} value={fmtBRL(m.comHunterPrev)} hint="Prevista sobre o faturamento" onClick={open("Comissão prevista Hunter", m.projetados)} />
         </div>
       </Section>
@@ -141,10 +144,16 @@ export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente
         <h3 className="pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Pipeline: próximos meses</h3>
         <div className={grid3}>
           {m.pipeline.map((p) => (
-            <button key={`${p.ano}-${p.mes}`} onClick={open(`Pipeline ${MES_LONGO[p.mes - 1]}/${p.ano}`, p.rows)} className="rounded-2xl border bg-g-purple-soft/50 p-5 text-left transition hover:shadow-md">
-              <div className="text-sm font-semibold text-g-purple">{MES_LONGO[p.mes - 1]} {p.ano}</div>
-              <div className="mt-2 text-2xl font-semibold tabular-nums">{fmtBRL(p.valor)}</div>
-              <div className="text-xs text-muted-foreground">{p.qtd} procedimento{p.qtd === 1 ? "" : "s"}</div>
+            <button key={`${p.ano}-${p.mes}`} onClick={open(`Pipeline ${MES_LONGO[p.mes - 1]}/${p.ano}`, p.rows)} className="report-pipeline rounded-2xl border bg-g-purple-soft/50 p-5 text-left transition hover:shadow-md">
+              <div className="no-print">
+                <div className="text-sm font-semibold text-g-purple">{MES_LONGO[p.mes - 1]} {p.ano}</div>
+                <div className="mt-2 text-2xl font-semibold tabular-nums">{fmtBRL(p.valor)}</div>
+                <div className="text-xs text-muted-foreground">{p.qtd} procedimento{p.qtd === 1 ? "" : "s"}</div>
+              </div>
+              <div className="print-only">
+                <div className="rp-mes">{MES_LONGO[p.mes - 1]} {p.ano}</div>
+                <div className="rp-row"><b>{fmtInt(p.qtd)}</b><span><strong>{fmtBRL(p.valor)}</strong><small>faturamento previsto</small></span></div>
+              </div>
             </button>
           ))}
         </div>
@@ -152,7 +161,7 @@ export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente
 
       <OrigemChart origens={m.origens} onOpen={(o, rows) => setAudit({ title: `Origem: ${o}`, rows })} />
 
-      <LeadsTable leads={m.leads} nomeCliente={nomeCliente} />
+      <LeadsTable leads={m.leads} nomeCliente={nomeCliente} comDoutor={carteira} />
 
       <Evolucao data={data} clienteIds={clienteIds} de={de} ate={ate} m={m} />
 
@@ -170,24 +179,24 @@ export function Dashboard({ data, clienteIds, de, ate, carteira, onSelectCliente
   );
 }
 
-function RowsTable({ rows, nomeCliente, withLine }: { rows: Venda[]; nomeCliente: (id: string) => string; withLine?: boolean }) {
+function RowsTable({ rows, nomeCliente, withLine, comDoutor = true }: { rows: Venda[]; nomeCliente: (id: string) => string; withLine?: boolean; comDoutor?: boolean }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           {withLine && <TableHead>Linha</TableHead>}
-          <TableHead>Nome do Lead</TableHead><TableHead>Doutor</TableHead><TableHead>Data da Consulta</TableHead>
+          <TableHead>Nome do Lead</TableHead>{comDoutor && <TableHead>Doutor</TableHead>}<TableHead>Data da Consulta</TableHead>
           <TableHead>Data da Venda</TableHead><TableHead>Data da Cirurgia</TableHead><TableHead>Procedimento</TableHead>
           <TableHead className="text-right">Orçamento</TableHead><TableHead className="text-right">Valor Fechado</TableHead>{withLine && <TableHead className="text-right">Caixa</TableHead>}<TableHead>Status</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.length === 0 && <TableRow><TableCell colSpan={withLine ? 11 : 9} className="py-10 text-center text-muted-foreground">Nenhum registro.</TableCell></TableRow>}
+        {rows.length === 0 && <TableRow><TableCell colSpan={(withLine ? 11 : 9) - (comDoutor ? 0 : 1)} className="py-10 text-center text-muted-foreground">Nenhum registro.</TableCell></TableRow>}
         {rows.map((r) => (
           <TableRow key={r.id}>
             {withLine && <TableCell className="text-muted-foreground">{r.linha_planilha}</TableCell>}
             <TableCell className="font-medium">{r.lead_nome}</TableCell>
-            <TableCell>{nomeCliente(r.cliente_id)}</TableCell>
+            {comDoutor && <TableCell>{nomeCliente(r.cliente_id)}</TableCell>}
             <TableCell>{fmtDate(r.data_consulta)}</TableCell>
             <TableCell>{fmtDate(r.data_venda)}</TableCell>
             <TableCell>{fmtDate(r.data_cirurgia)}</TableCell>
@@ -203,11 +212,33 @@ function RowsTable({ rows, nomeCliente, withLine }: { rows: Venda[]; nomeCliente
   );
 }
 
+const ORIGEM_LABEL: Record<string, string> = { "ANÚNCIO/ADS": "Anúncios", "SEM ORIGEM": "Não informada", "INDICAÇÃO": "Indicação", INSTAGRAM: "Instagram", BASE: "Base" };
+const origemLabel = (o: string) => ORIGEM_LABEL[o] ?? o.charAt(0) + o.slice(1).toLowerCase();
+
+// Static bars for the printed report, where the interactive chart and its toggle do not apply.
+function PrintBars({ titulo, itens }: { titulo: string; itens: { nome: string; v: number; txt: string }[] }) {
+  const max = Math.max(1, ...itens.map((i) => i.v));
+  return (
+    <div className="report-bars">
+      <div className="rb-title">{titulo}</div>
+      {itens.length === 0 ? <div className="rb-empty">Sem registros no período.</div> : itens.map((i) => (
+        <div key={i.nome} className="rb-row"><span>{i.nome}</span><i><b style={{ width: `${Math.max(1.5, (i.v / max) * 100)}%` }} /></i><strong>{i.txt}</strong></div>
+      ))}
+    </div>
+  );
+}
+
 function OrigemChart({ origens, onOpen }: { origens: { origem: string; qtd: number; valor: number; rows: Venda[] }[]; onOpen: (o: string, r: Venda[]) => void }) {
   const [modo, setModo] = useState<"qtd" | "valor">("qtd");
+  const porQtd = origens.filter((o) => o.qtd > 0).sort((a, b) => b.qtd - a.qtd);
+  const porValor = origens.filter((o) => o.valor > 0).sort((a, b) => b.valor - a.valor);
   return (
     <Section title="Origem dos clientes">
-      <div className="rounded-2xl border bg-card p-5">
+      <div className="print-only report-bars-grid">
+        <PrintBars titulo="Quantidade de consultas" itens={porQtd.map((o) => ({ nome: origemLabel(o.origem), v: o.qtd, txt: fmtInt(o.qtd) }))} />
+        <PrintBars titulo="Faturamento previsto" itens={porValor.map((o) => ({ nome: origemLabel(o.origem), v: o.valor, txt: fmtBRL(o.valor) }))} />
+      </div>
+      <div className="no-print rounded-2xl border bg-card p-5">
         <div className="mb-3 flex justify-end gap-1 no-print">
           {(["qtd", "valor"] as const).map((k) => (
             <Button key={k} size="sm" variant={modo === k ? "default" : "outline"} onClick={() => setModo(k)}>{k === "qtd" ? "Quantidade" : "Faturamento"}</Button>
@@ -229,7 +260,7 @@ function OrigemChart({ origens, onOpen }: { origens: { origem: string; qtd: numb
   );
 }
 
-function LeadsTable({ leads, nomeCliente }: { leads: Venda[]; nomeCliente: (id: string) => string }) {
+function LeadsTable({ leads, nomeCliente, comDoutor }: { leads: Venda[]; nomeCliente: (id: string) => string; comDoutor: boolean }) {
   const [q, setQ] = useState("");
   const [st, setSt] = useState("todos");
   const [page, setPage] = useState(0);
@@ -243,7 +274,7 @@ function LeadsTable({ leads, nomeCliente }: { leads: Venda[]; nomeCliente: (id: 
       ...filtered.map((r) => [r.lead_nome, nomeCliente(r.cliente_id), fmtDate(r.data_consulta), fmtDate(r.data_venda), fmtDate(r.data_cirurgia), r.procedimento, r.orcamento, r.valor_fechado, r.status]),
     ]);
   return (
-    <Section className="report-leads" title={`Leads no período · ${filtered.length} lead${filtered.length === 1 ? "" : "s"}`}>
+    <Section className="report-leads" title="Leads no período" count={`${fmtInt(filtered.length)} lead${filtered.length === 1 ? "" : "s"}`}>
       {(q || st !== "todos") && <p className="print-only text-xs text-muted-foreground">{q ? `Busca: ${q}` : ""}{q && st !== "todos" ? " · " : ""}{st !== "todos" ? `Status: ${st}` : ""}</p>}
       <div className="rounded-2xl border bg-card p-4">
         <div className="mb-3 flex flex-wrap gap-2 no-print">
@@ -261,7 +292,7 @@ function LeadsTable({ leads, nomeCliente }: { leads: Venda[]; nomeCliente: (id: 
           <Button variant="outline" onClick={exportCsv}><Download className="size-4" />Exportar CSV</Button>
         </div>
         <div className="no-print overflow-x-auto"><RowsTable rows={rows} nomeCliente={nomeCliente} /></div>
-        <div className="print-only"><RowsTable rows={filtered} nomeCliente={nomeCliente} /></div>
+        <div className="print-only"><RowsTable rows={filtered} nomeCliente={nomeCliente} comDoutor={comDoutor} /></div>
         {pages > 1 && (
           <div className="mt-3 flex items-center justify-end gap-2 text-sm no-print">
             <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>Anterior</Button>
@@ -290,7 +321,7 @@ function Evolucao({ data, clienteIds, de, ate, m }: { data: PanelData; clienteId
   ];
   const max = Math.max(1, ...funil.map((f) => f.v));
   return (
-    <Section title="Evolução e metas">
+    <Section title="Evolução e metas" className="report-hide">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="space-y-4 rounded-2xl border bg-card p-5">
           <div className="text-sm font-semibold">Caixa recebido vs. metas · {fmtBRL(m.caixa)}</div>
