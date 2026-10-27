@@ -1,8 +1,4 @@
 import { META_GRAPH_VERSION } from "./meta-config";
-import type { Empresa } from "./empresa";
-
-// One Meta connection row per company.
-export const conexaoId = (empresa: Empresa) => (empresa === "barbearias" ? 2 : 1);
 
 const GRAPH = `https://graph.facebook.com/${META_GRAPH_VERSION}`;
 
@@ -38,7 +34,7 @@ async function graphGet<T>(path: string, params: Record<string, string>, token?:
   return body as T;
 }
 
-export async function exchangeCodeAndSave(code: string, redirectUri: string, userId: string, empresa: Empresa) {
+export async function exchangeCodeAndSave(code: string, redirectUri: string, userId: string) {
   const { appId, appSecret } = metaCreds();
   if (!appId || !appSecret) throw new MetaApiError("config");
   const short = await graphGet<{ access_token: string }>("/oauth/access_token", {
@@ -54,16 +50,16 @@ export async function exchangeCodeAndSave(code: string, redirectUri: string, use
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const now = new Date().toISOString();
   const { error } = await supabaseAdmin.from("meta_conexao").upsert({
-    id: conexaoId(empresa), meta_user_id: me.id, meta_user_name: me.name ?? null, access_token: token,
+    id: 1, meta_user_id: me.id, meta_user_name: me.name ?? null, access_token: token,
     token_expires_at: long.expires_in ? new Date(Date.now() + long.expires_in * 1000).toISOString() : null,
     scopes, connected_by: userId, connected_at: now, updated_at: now,
   });
   if (error) { console.error("[meta] save connection", error.message); throw new MetaApiError("save"); }
 }
 
-export async function getMetaToken(empresa: Empresa): Promise<string | null> {
+export async function getMetaToken(): Promise<string | null> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin.from("meta_conexao").select("access_token").eq("id", conexaoId(empresa)).maybeSingle();
+  const { data } = await supabaseAdmin.from("meta_conexao").select("access_token").eq("id", 1).maybeSingle();
   return data?.access_token ?? null;
 }
 
@@ -110,18 +106,17 @@ async function accountDailyInsights(token: string, accountId: string, since: str
   return rows;
 }
 
-/** Reads daily spend and started conversations for every ad account linked to the company's clients (read-only on Meta). */
-export async function importMetaInvestimentos(opts: { dias: number; empresa: Empresa }) {
+/** Reads daily spend and started conversations for every linked ad account (read-only on Meta). */
+export async function importMetaInvestimentos(opts: { dias: number }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const token = await getMetaToken(opts.empresa);
+  const token = await getMetaToken();
   if (!token) return { ok: false as const, erro: "desconectado", contas: 0, dias: 0 };
-  const { data: contas } = await (supabaseAdmin as any).from("meta_contas_anuncio")
-    .select("ad_account_id, cliente_id, nome, clientes!inner(empresa)").eq("clientes.empresa", opts.empresa);
+  const { data: contas } = await supabaseAdmin.from("meta_contas_anuncio").select("ad_account_id, cliente_id, nome");
   const until = isoDay(new Date());
   const since = isoDay(new Date(Date.now() - opts.dias * 86_400_000));
   let dias = 0;
   const erros: string[] = [];
-  for (const c of (contas ?? []) as { ad_account_id: string; cliente_id: string; nome: string | null }[]) {
+  for (const c of contas ?? []) {
     try {
       const rows = await accountDailyInsights(token, c.ad_account_id, since, until);
       const now = new Date().toISOString();
@@ -154,6 +149,6 @@ export async function importMetaInvestimentos(opts: { dias: number; empresa: Emp
   await supabaseAdmin.from("meta_conexao").update({
     last_import_at: new Date().toISOString(),
     last_import_error: erros.length ? `Falha ao ler: ${erros.join(", ")}` : null,
-  }).eq("id", conexaoId(opts.empresa));
+  }).eq("id", 1);
   return { ok: erros.length === 0, erro: erros.length ? erros.join(", ") : null, contas: contas?.length ?? 0, dias };
 }

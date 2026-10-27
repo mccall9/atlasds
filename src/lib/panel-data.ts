@@ -16,7 +16,7 @@ async function fetchAll<T>(table: string, order?: string): Promise<T[]> {
 
 export async function loadPanelData(): Promise<PanelData> {
   const [clientes, vendas, metas, acompanhamento, investimentos, cfg] = await Promise.all([
-    supabase.from("clientes").select("id, nome, hunter, performance, meta_mensal_override, ativo, last_sync_at, last_sync_error").eq("empresa", "atlas").order("nome"),
+    supabase.from("clientes").select("id, nome, hunter, performance, meta_mensal_override, ativo, last_sync_at, last_sync_error").order("nome"),
     fetchAll<any>("vendas", "id"),
     fetchAll<any>("metas"),
     fetchAll<any>("acompanhamento", "ordem"),

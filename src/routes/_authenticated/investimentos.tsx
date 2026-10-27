@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useClientes } from "@/lib/empresa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/investimentos")({
 
 function Investimentos() {
   const qc = useQueryClient();
-  const clientes = useClientes("atlas");
+  const clientes = useQuery({ queryKey: ["clientes"], queryFn: async () => (await supabase.from("clientes").select("*").order("nome")).data ?? [] });
   const lista = useQuery({ queryKey: ["investimentos"], queryFn: async () => (await supabase.from("investimento_anuncios").select("*").order("data", { ascending: false }).limit(500)).data ?? [] });
   const [f, setF] = useState({ cliente_id: "", data: toISO(new Date()), plataforma: "meta", valor: "", conversas: "" });
   const nome = (id: string) => clientes.data?.find((c) => c.id === id)?.nome ?? "—";

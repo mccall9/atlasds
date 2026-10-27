@@ -37,7 +37,7 @@ const empty = { nome: "", url: "", hunter: "", performance: "", layout: "atual",
 
 function Clientes() {
   const qc = useQueryClient();
-  const q = useQuery({ queryKey: ["clientes", "atlas"], queryFn: async () => (await supabase.from("clientes").select("*").eq("empresa", "atlas").order("nome")).data ?? [] });
+  const q = useQuery({ queryKey: ["clientes"], queryFn: async () => (await supabase.from("clientes").select("*").order("nome")).data ?? [] });
   const [edit, setEdit] = useState<Cliente | "new" | null>(null);
   const [f, setF] = useState(empty);
   const sync = useServerFn(syncNow);
@@ -48,7 +48,7 @@ function Clientes() {
 
   const openForm = (c: Cliente | "new") => {
     setEdit(c);
-    setF(c === "new" ? empty : { nome: c.nome, url: c.spreadsheet_id ?? "", hunter: c.hunter ?? "", performance: c.performance ?? "", layout: c.layout, meta: c.meta_mensal_override?.toString() ?? "", ativo: c.ativo });
+    setF(c === "new" ? empty : { nome: c.nome, url: c.spreadsheet_id, hunter: c.hunter ?? "", performance: c.performance ?? "", layout: c.layout, meta: c.meta_mensal_override?.toString() ?? "", ativo: c.ativo });
   };
   const save = async () => {
     const id = extractSpreadsheetId(f.url);

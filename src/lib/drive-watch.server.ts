@@ -26,7 +26,7 @@ async function drive(path: string, body?: Record<string, unknown>) {
 export const hashChannelToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
 export async function ensureDriveWatches() {
-  const { data: clients, error } = await db.from("clientes").select("id,nome,spreadsheet_id").eq("ativo", true).eq("empresa", "atlas").not("spreadsheet_id", "is", null);
+  const { data: clients, error } = await db.from("clientes").select("id,nome,spreadsheet_id").eq("ativo", true);
   if (error) throw error;
   const { data: watches, error: readError } = await db.from("portal_drive_watches").select("cliente_id,spreadsheet_id,expires_at,resource_id,callback_url");
   if (readError) throw readError;

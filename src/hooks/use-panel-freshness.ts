@@ -10,7 +10,7 @@ export function usePanelFreshness() {
     queryKey: ["panel-freshness"],
     queryFn: async () => {
       const { data, error } = await supabase.from("clientes")
-        .select("id,last_sync_at,last_sync_error").eq("ativo", true).eq("empresa", "atlas").order("id");
+        .select("id,last_sync_at,last_sync_error").eq("ativo", true).order("id");
       if (error) throw error;
       return JSON.stringify(data);
     },

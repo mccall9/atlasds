@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GestorOuAdmin, useRole } from "@/components/atlas/AppShell";
-import { EMPRESAS, useClientes, useEmpresa } from "@/lib/empresa";
+import { AdminOnly } from "@/components/atlas/AppShell";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { META_ERROR_MESSAGES, META_ORIGINS, META_SCOPES, metaRedirectUri } from "@/lib/meta-config";
 import { disconnectMeta, getMetaStatus, importMetaNow, listMetaAdAccounts, startMetaOAuth } from "@/lib/meta.functions";
@@ -30,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/integracoes")({
       { property: "og:description", content: "Conexão nativa com Meta Ads para investimento dos doutores." },
     ],
   }),
-  component: () => <GestorOuAdmin><Integracoes /></GestorOuAdmin>,
+  component: () => <AdminOnly><Integracoes /></AdminOnly>,
 });
 
 const NONE = "__none__";
@@ -70,17 +69,13 @@ function Integracoes() {
   const importFn = useServerFn(importMetaNow);
   const [importando, setImportando] = useState(false);
 
-  const { empresa } = useEmpresa();
-  const isAdmin = useRole().data === "admin";
-  const quem = empresa === "barbearias" ? "barbearia" : "doutor";
-  const status = useQuery({ queryKey: ["meta-status", empresa], queryFn: () => statusFn({ data: { empresa } }) });
+  const status = useQuery({ queryKey: ["meta-status"], queryFn: () => statusFn() });
   const conectado = !!status.data?.conexao;
-  const contas = useQuery({ queryKey: ["meta-contas", empresa], queryFn: () => listFn({ data: { empresa } }), enabled: conectado });
-  const clientes = useClientes(empresa);
-  // Links are filtered to this company's clients; the Meta connection itself is already per company.
+  const contas = useQuery({ queryKey: ["meta-contas"], queryFn: () => listFn(), enabled: conectado });
+  const clientes = useQuery({ queryKey: ["clientes"], queryFn: async () => (await supabase.from("clientes").select("*").order("nome")).data ?? [] });
   const vinculos = useQuery({
-    queryKey: ["meta-vinculos", empresa],
-    queryFn: async () => (await supabase.from("meta_contas_anuncio").select("*, clientes!inner(empresa)").eq("clientes.empresa", empresa)).data ?? [],
+    queryKey: ["meta-vinculos"],
+    queryFn: async () => (await supabase.from("meta_contas_anuncio").select("*")).data ?? [],
   });
 
   useEffect(() => {
@@ -91,7 +86,7 @@ function Integracoes() {
   }, [search.meta, search.motivo, nav]);
 
   const conectar = async () => {
-    const r = await startFn({ data: { origin: window.location.origin, empresa } });
+    const r = await startFn({ data: { origin: window.location.origin } });
     if ("error" in r) {
       toast.error(r.error === "config" ? META_ERROR_MESSAGES["config"]! : "Este endereço não está liberado para a conexão. Use o site publicado.");
       return;
@@ -100,10 +95,10 @@ function Integracoes() {
   };
 
   const desconectar = async () => {
-    await disconnectFn({ data: { empresa } });
+    await disconnectFn();
     toast.success("Meta desconectada");
-    qc.invalidateQueries({ queryKey: ["meta-status", empresa] });
-    qc.removeQueries({ queryKey: ["meta-contas", empresa] });
+    qc.invalidateQueries({ queryKey: ["meta-status"] });
+    qc.removeQueries({ queryKey: ["meta-contas"] });
   };
 
   const vincular = async (conta: { id: string; nome: string; moeda: string | null }, clienteId: string) => {
@@ -115,23 +110,22 @@ function Integracoes() {
           { onConflict: "ad_account_id" },
         );
     if (error) { toast.error("Não foi possível salvar o vínculo"); return; }
-    toast.success(clienteId === NONE ? "Vínculo removido" : `Conta vinculada à ${quem === "doutor" ? "conta do doutor" : "barbearia"}`);
+    toast.success(clienteId === NONE ? "Vínculo removido" : "Conta vinculada ao doutor");
     qc.invalidateQueries({ queryKey: ["meta-vinculos"] });
   };
 
   const importar = async () => {
     setImportando(true);
     try {
-      const r = await importFn({ data: { empresa } });
+      const r = await importFn();
       if (r.ok) toast.success(`Investimento atualizado: ${r.dias} dia(s) de ${r.contas} conta(s)`);
       else toast.error(r.erro === "desconectado" ? "Conecte a Meta antes de importar." : `Algumas contas não foram lidas: ${r.erro}`);
     } catch {
       toast.error("Não foi possível importar agora.");
     } finally {
       setImportando(false);
-      qc.invalidateQueries({ queryKey: ["meta-status", empresa] });
+      qc.invalidateQueries({ queryKey: ["meta-status"] });
       qc.invalidateQueries({ queryKey: ["investimentos"] });
-      qc.invalidateQueries({ queryKey: ["crm-investimentos"] });
       qc.invalidateQueries({ queryKey: ["panel"] });
     }
   };
@@ -145,12 +139,12 @@ function Integracoes() {
       <div className="flex items-start gap-3">
         <div className="flex size-10 items-center justify-center rounded-xl bg-g-blue-soft text-g-blue"><Megaphone className="size-5" /></div>
         <div>
-          <h1 className="text-2xl font-semibold">Integrações · Meta Ads <span className="text-base font-normal text-muted-foreground">· {EMPRESAS[empresa].nome}</span></h1>
-          <p className="text-sm text-muted-foreground">Conexão somente de leitura com as contas de anúncio {quem === "doutor" ? "dos doutores" : "das barbearias"}. Nenhuma campanha é alterada. Cada empresa tem a sua própria conexão.</p>
+          <h1 className="text-2xl font-semibold">Integrações · Meta Ads</h1>
+          <p className="text-sm text-muted-foreground">Conexão somente de leitura com as contas de anúncio dos doutores. Nenhuma campanha é alterada.</p>
         </div>
       </div>
 
-      {isAdmin && <Step n={1} title="Criar o app na Meta e cadastrar App ID e App Secret">
+      <Step n={1} title="Criar o app na Meta e cadastrar App ID e App Secret">
         <ol className="list-decimal space-y-1.5 pl-5">
           <li>Acesse <a className="inline-flex items-center gap-1 font-medium text-foreground underline" href="https://developers.facebook.com/apps" target="_blank" rel="noreferrer">developers.facebook.com/apps<ExternalLink className="size-3" /></a> com o perfil que administra a BM da Atlas e crie um app do tipo <strong className="text-foreground">Empresa</strong>.</li>
           <li>Adicione os produtos <strong className="text-foreground">Login do Facebook</strong> e <strong className="text-foreground">API de Marketing</strong>.</li>
@@ -163,11 +157,9 @@ function Integracoes() {
             <StatusPill ok={!!status.data?.appSecretConfigurado} okLabel="App Secret configurado" pendingLabel="App Secret pendente" />
           </div>
         )}
-      
+      </Step>
 
-      </Step>}
-
-      {isAdmin && <Step n={2} title="Cadastrar a URL de redirecionamento na Meta">
+      <Step n={2} title="Cadastrar a URL de redirecionamento na Meta">
         <p>No app da Meta, abra <strong className="text-foreground">Login do Facebook → Configurações</strong> e cole as URLs abaixo em <strong className="text-foreground">URIs de redirecionamento do OAuth válidos</strong>. Em <strong className="text-foreground">Configurações → Básico → Domínios do app</strong>, adicione <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">atlasds.lovable.app</code>.</p>
         <div className="space-y-2">
           {META_ORIGINS.map((o) => {
@@ -184,9 +176,9 @@ function Integracoes() {
           })}
         </div>
         <p className="text-xs">Permissões solicitadas: {META_SCOPES.join(", ")} (somente leitura de anúncios e contas da BM).</p>
-      </Step>}
+      </Step>
 
-      <Step n={3 - (isAdmin ? 0 : 2)} title={`Conectar a conta Meta ${empresa === "barbearias" ? "da empresa de barbearias" : "da Atlas"}`}>
+      <Step n={3} title="Conectar a conta Meta da Atlas">
         {status.isLoading ? <Skeleton className="h-10 w-64" /> : conectado ? (
           <div className="flex flex-wrap items-center gap-3">
             <StatusPill ok okLabel={`Conectado como ${status.data?.conexao?.nome ?? status.data?.conexao?.id}`} pendingLabel="" />
@@ -202,10 +194,10 @@ function Integracoes() {
             {!credsOk && <span className="text-xs">Disponível após cadastrar App ID e App Secret.</span>}
           </div>
         )}
-        <p className="text-xs">Use o perfil que tem acesso de parceiro às BMs {quem === "doutor" ? "dos doutores" : "das barbearias"}. Nenhuma senha é armazenada no painel; a renovação é necessária a cada ~60 dias.</p>
+        <p className="text-xs">Use o perfil que tem acesso de parceiro às BMs dos doutores. Nenhuma senha é armazenada no painel; a renovação é necessária a cada ~60 dias.</p>
       </Step>
 
-      <Step n={4 - (isAdmin ? 0 : 2)} title={`Vincular cada conta de anúncio ${quem === "doutor" ? "ao doutor" : "à barbearia"}`}>
+      <Step n={4} title="Vincular cada conta de anúncio ao doutor">
         {!conectado ? <p>Conecte a Meta para listar as contas de anúncio.</p> : contas.isLoading ? <Skeleton className="h-32 w-full" /> : contas.data?.error ? (
           <p className="text-g-red">{contas.data.error === "token" ? "O acesso à Meta expirou. Clique em Reconectar." : "A Meta não respondeu. Tente novamente em instantes."}</p>
         ) : !contas.data?.contas.length ? (
@@ -213,7 +205,7 @@ function Integracoes() {
         ) : (
           <div className="overflow-x-auto rounded-xl border">
             <Table>
-              <TableHeader><TableRow><TableHead>Conta de anúncio</TableHead><TableHead>ID</TableHead><TableHead>Moeda</TableHead><TableHead className="w-64">{quem === "doutor" ? "Doutor" : "Barbearia"}</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Conta de anúncio</TableHead><TableHead>ID</TableHead><TableHead>Moeda</TableHead><TableHead className="w-64">Doutor</TableHead></TableRow></TableHeader>
               <TableBody>
                 {contas.data.contas.map((c) => (
                   <TableRow key={c.id}>
@@ -237,7 +229,7 @@ function Integracoes() {
         )}
       </Step>
 
-      <Step n={5 - (isAdmin ? 0 : 2)} title="Importar investimento e conversas">
+      <Step n={5} title="Importar investimento e conversas">
         <p>O painel lê da Meta o valor investido e as conversas iniciadas por dia de cada conta vinculada. A leitura roda sozinha junto com a atualização de 15 em 15 minutos (últimos 40 dias); o botão abaixo relê os últimos 13 meses.</p>
         <div className="flex flex-wrap items-center gap-3">
           <Button onClick={importar} disabled={!conectado || importando}><RefreshCw className={importando ? "size-4 animate-spin" : "size-4"} />{importando ? "Importando…" : "Importar agora"}</Button>

@@ -120,6 +120,13 @@
       "when": 1793500100000,
       "tag": "0016_empresas",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793700000000,
+      "tag": "0017_remove_barbearias",
+      "breakpoints": true
     }
   ]
 }

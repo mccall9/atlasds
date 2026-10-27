@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedBarbeariasRouteImport } from './routes/_authenticated/barbearias'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
@@ -40,11 +39,6 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedBarbeariasRoute = AuthenticatedBarbeariasRouteImport.update({
-  id: '/barbearias',
-  path: '/barbearias',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   id: '/clientes',
@@ -122,7 +116,6 @@ const ApiPublicWebhooksCrmTokenRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/barbearias': typeof AuthenticatedBarbeariasRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/crm': typeof AuthenticatedCrmRoute
@@ -140,7 +133,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/barbearias': typeof AuthenticatedBarbeariasRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/crm': typeof AuthenticatedCrmRoute
@@ -160,7 +152,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_authenticated/barbearias': typeof AuthenticatedBarbeariasRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/crm': typeof AuthenticatedCrmRoute
@@ -180,7 +171,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/barbearias'
     | '/clientes'
     | '/configuracoes'
     | '/crm'
@@ -198,7 +188,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/barbearias'
     | '/clientes'
     | '/configuracoes'
     | '/crm'
@@ -217,7 +206,6 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
-    | '/_authenticated/barbearias'
     | '/_authenticated/clientes'
     | '/_authenticated/configuracoes'
     | '/_authenticated/crm'
@@ -267,13 +255,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/barbearias': {
-      id: '/_authenticated/barbearias'
-      path: '/barbearias'
-      fullPath: '/barbearias'
-      preLoaderRoute: typeof AuthenticatedBarbeariasRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/clientes': {
       id: '/_authenticated/clientes'
@@ -370,7 +351,6 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedBarbeariasRoute: typeof AuthenticatedBarbeariasRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedCrmRoute: typeof AuthenticatedCrmRoute
@@ -381,7 +361,6 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedBarbeariasRoute: AuthenticatedBarbeariasRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedCrmRoute: AuthenticatedCrmRoute,
